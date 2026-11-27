@@ -1,5 +1,10 @@
 # Corvix Changelog
 
+## v1.0.6 (Build 7)
+### UI Polish & Cleanups
+- **Creator Signature Card Polish:** Removed the `"PERSONAL SIGNATURE"`, `"· SIGNATURE"`, and `"Serial ..."` labels from `CreatorSignature.kt` for a cleaner Liquid Glass showcase and onboarding footer.
+- **Profile Screen Cleanup:** Removed the unused `Export Card` button from the `Your Recap` header in `ProfileScreen.kt`.
+
 ## v1.0.5 (Build 6)
 ### Personal Signature Emblem & Cryptographic Release-Key Seal
 - **Personal Creator Signature Emblem:** Added the bespoke crimson-and-obsidian `ravenshadex` emblem (`ravenshadex_signature.png`) to the Liquid Glass Settings signature card and Welcome/Onboarding footer with tap-to-replay animation.

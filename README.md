@@ -5,7 +5,7 @@
 
   <p>
     <a href="https://github.com/ravenshadex/Corvix/releases/latest">
-      <img src="https://img.shields.io/badge/Download-v1.0.5%20APK-38BDF8?style=for-the-badge&logo=android" alt="Download Corvix v1.0.5 APK" />
+      <img src="https://img.shields.io/badge/Download-v1.0.6%20APK-38BDF8?style=for-the-badge&logo=android" alt="Download Corvix v1.0.6 APK" />
     </a>
     <img src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026--34)-34D399?style=for-the-badge" alt="Android API 26-34" />
     <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin" alt="Kotlin 2.0.21" />

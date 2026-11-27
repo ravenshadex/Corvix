@@ -87,6 +87,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.corvix.player.R
 import com.corvix.player.model.AppSkin
+import com.corvix.player.ui.components.OnboardingCreatorSignatureFooter
 
 private object OnboardingPalette {
     val Obsidian = Color(0xFF07090E)
@@ -276,19 +277,24 @@ private fun OnboardingWelcomePage(
             )
         }
 
-        // Bottom Stepper + Primary Electric Amber CTA
+        // Bottom Stepper + Primary Electric Amber CTA + Creator Signature Footer
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 6.dp)
+                .padding(bottom = 4.dp)
         ) {
             OnboardingStepStepper(activePage = 0)
             CorvixAmberPrimaryButton(
                 label = "Choose Your Skin",
                 trailingIcon = Icons.AutoMirrored.Rounded.ArrowForward,
                 onClick = onNext
+            )
+            OnboardingCreatorSignatureFooter(
+                amberStart = OnboardingPalette.AmberStart,
+                amberEnd = OnboardingPalette.AmberEnd,
+                mutedColor = OnboardingPalette.TextMuted
             )
         }
     }
@@ -619,12 +625,23 @@ private fun OnboardingSkinAndAccessPage(
             }
         }
 
-        // Dynamic Launch CTA
-        Box(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+        // Dynamic Launch CTA + Creator Signature Footer
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp)
+        ) {
             CorvixAmberPrimaryButton(
                 label = "Start with ${selectedSkin.title}",
                 trailingIcon = Icons.Rounded.Bolt,
                 onClick = onLaunch
+            )
+            OnboardingCreatorSignatureFooter(
+                amberStart = OnboardingPalette.AmberStart,
+                amberEnd = OnboardingPalette.AmberEnd,
+                mutedColor = OnboardingPalette.TextMuted
             )
         }
     }

@@ -54,6 +54,7 @@ import com.corvix.player.model.SheetType
 import com.corvix.player.ui.components.CorvixHorizontalSlider
 import com.corvix.player.ui.components.CorvixSeekSlider
 import com.corvix.player.ui.components.CorvixVerticalEqSlider
+import com.corvix.player.ui.components.CreatorSignatureSettingsCard
 import com.corvix.player.ui.components.GlassPill
 import com.corvix.player.ui.components.GlassSectionDivider
 import com.corvix.player.ui.components.GlassSurface
@@ -814,6 +815,14 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+
+        // 10. Personal Creator Signature Card (Animated Vector Autograph)
+        item(key = "creator_signature") {
+            CreatorSignatureSettingsCard(
+                versionName = BuildConfig.VERSION_NAME,
+                versionCode = BuildConfig.VERSION_CODE
+            )
         }
     }
 }

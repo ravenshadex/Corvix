@@ -12,6 +12,8 @@ import com.corvix.player.model.TrackLanguage
 import com.corvix.player.model.VisualizerStyle
 import com.corvix.player.model.detectTrackLanguage
 import com.corvix.player.model.parseRawLrcLyrics
+import com.corvix.player.ui.components.CreatorSealCrypto
+import com.corvix.player.ui.components.SealTrustState
 import com.corvix.player.ui.theme.CorvixMetrics
 import com.corvix.player.ui.theme.buildCorvixPalette
 import com.corvix.player.viewmodel.CorvixUiState
@@ -136,5 +138,31 @@ class CorvixModelsTest {
         assertEquals(sample[5].id, secondNext?.id)
         val prev = CorvixServiceQueue.prevTrackFallback()
         assertEquals(sample[4].id, prev?.id)
+    }
+
+    @Test
+    fun creatorSealCryptoBindsToReleaseCertificateSha256() {
+        val weights = CreatorSealCrypto.releaseByteWeights()
+        assertEquals(32, weights.size)
+        assertTrue(weights.all { it in 0f..1f })
+
+        val releaseInspection = CreatorSealCrypto.verifySigningDigest(
+            actualSha256Hex = CreatorSealCrypto.RELEASE_CERT_SHA256.lowercase(),
+            isDebugBuild = false
+        )
+        assertEquals(SealTrustState.VERIFIED_RELEASE, releaseInspection.trustState)
+        assertEquals("EAAE·1247···B5C5·28B0", releaseInspection.shortFingerprint)
+
+        val devInspection = CreatorSealCrypto.verifySigningDigest(
+            actualSha256Hex = "00".repeat(32),
+            isDebugBuild = true
+        )
+        assertEquals(SealTrustState.DEBUG_DEV_BUILD, devInspection.trustState)
+
+        val tamperedInspection = CreatorSealCrypto.verifySigningDigest(
+            actualSha256Hex = "11".repeat(32),
+            isDebugBuild = false
+        )
+        assertEquals(SealTrustState.UNVERIFIED_TAMPERED, tamperedInspection.trustState)
     }
 }

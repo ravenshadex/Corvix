@@ -86,6 +86,77 @@ private val EMPTY_PLACEHOLDER_TRACK = Track(
     orbColors = listOf(Color(0xFF94A3B8), Color(0xFF475569))
 )
 
+private val SEARCH_SPLIT_REGEX = Regex("\\s+")
+
+fun filterAndRankTracks(
+    tracks: List<Track>,
+    query: String,
+    selectedLanguage: TrackLanguage = TrackLanguage.ALL,
+    librarySortOrder: LibrarySortOrder = LibrarySortOrder.TITLE_AZ,
+    playCounts: Map<Long, Int> = emptyMap()
+): List<Track> {
+    val cleanQuery = query.trim().lowercase()
+    val tokens = if (cleanQuery.isEmpty()) emptyList() else cleanQuery.split(SEARCH_SPLIT_REGEX).filter { it.isNotEmpty() }
+
+    val base = tracks.filter { t ->
+        val matchesLang = selectedLanguage == TrackLanguage.ALL || t.detectedLanguage == selectedLanguage
+        if (!matchesLang) return@filter false
+        if (tokens.isEmpty()) return@filter true
+
+        val title = t.title.lowercase()
+        val artist = t.artist.lowercase()
+        val album = t.album.lowercase()
+        val genre = t.genre.lowercase()
+        val formatLabel = t.formatLabel.lowercase()
+        val shortFormat = t.shortFormat.lowercase()
+        val langLabel = t.detectedLanguage.label.lowercase()
+
+        tokens.all { tok ->
+            title.contains(tok) ||
+                artist.contains(tok) ||
+                album.contains(tok) ||
+                genre.contains(tok) ||
+                formatLabel.contains(tok) ||
+                shortFormat.contains(tok) ||
+                langLabel.contains(tok)
+        }
+    }
+
+    val sortComparator: Comparator<Track> = when (librarySortOrder) {
+        LibrarySortOrder.TITLE_AZ -> compareBy { it.title.trim().lowercase() }
+        LibrarySortOrder.DATE_ADDED -> compareByDescending<Track> { it.dateAddedSec }
+            .thenBy { it.title.trim().lowercase() }
+        LibrarySortOrder.MOST_PLAYED -> compareByDescending<Track> { playCounts[it.id] ?: 0 }
+            .thenBy { it.title.trim().lowercase() }
+        LibrarySortOrder.ARTIST -> compareBy<Track> { it.artist.trim().lowercase() }
+            .thenBy { it.title.trim().lowercase() }
+        LibrarySortOrder.DURATION -> compareByDescending<Track> { it.durationSec }
+            .thenBy { it.title.trim().lowercase() }
+    }
+
+    if (tokens.isEmpty()) {
+        return base.sortedWith(sortComparator)
+    }
+
+    val firstTok = tokens.first()
+    return base.sortedWith(
+        compareBy<Track> { t ->
+            val title = t.title.trim().lowercase()
+            val artist = t.artist.trim().lowercase()
+            val album = t.album.trim().lowercase()
+            when {
+                title.startsWith(cleanQuery) -> 0
+                title.contains(cleanQuery) -> 1
+                title.split(SEARCH_SPLIT_REGEX).any { it.startsWith(firstTok) } -> 2
+                artist.startsWith(cleanQuery) -> 3
+                artist.contains(cleanQuery) -> 4
+                album.contains(cleanQuery) -> 5
+                else -> 6
+            }
+        }.then(sortComparator)
+    )
+}
+
 @Immutable
 data class CorvixUiState(
     val currentScreen: AppScreen = AppScreen.LIBRARY,
@@ -202,33 +273,13 @@ data class CorvixUiState(
     }
 
     val filteredTracks: List<Track> by lazy(LazyThreadSafetyMode.NONE) {
-        val q = searchQuery.trim().lowercase()
-        val base = tracks.filter { t ->
-            val matchesLang = selectedLanguage == TrackLanguage.ALL || t.detectedLanguage == selectedLanguage
-            val matchesQuery = q.isEmpty() ||
-                t.title.lowercase().contains(q) ||
-                t.artist.lowercase().contains(q) ||
-                t.album.lowercase().contains(q) ||
-                t.genre.lowercase().contains(q) ||
-                t.formatLabel.lowercase().contains(q) ||
-                t.detectedLanguage.label.lowercase().contains(q)
-            matchesLang && matchesQuery
-        }
-        when (librarySortOrder) {
-            LibrarySortOrder.TITLE_AZ -> base.sortedBy { it.title.trim().lowercase() }
-            LibrarySortOrder.DATE_ADDED -> base.sortedWith(
-                compareByDescending<Track> { it.dateAddedSec }.thenBy { it.title.trim().lowercase() }
-            )
-            LibrarySortOrder.MOST_PLAYED -> base.sortedWith(
-                compareByDescending<Track> { playCounts[it.id] ?: 0 }.thenBy { it.title.trim().lowercase() }
-            )
-            LibrarySortOrder.ARTIST -> base.sortedWith(
-                compareBy<Track> { it.artist.trim().lowercase() }.thenBy { it.title.trim().lowercase() }
-            )
-            LibrarySortOrder.DURATION -> base.sortedWith(
-                compareByDescending<Track> { it.durationSec }.thenBy { it.title.trim().lowercase() }
-            )
-        }
+        filterAndRankTracks(
+            tracks = tracks,
+            query = searchQuery,
+            selectedLanguage = selectedLanguage,
+            librarySortOrder = librarySortOrder,
+            playCounts = playCounts
+        )
     }
 
     val recentlyPlayedTracks: List<Track> by lazy(LazyThreadSafetyMode.NONE) {
@@ -587,7 +638,7 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun updateSearchQuery(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        _uiState.update { it.copy(searchQuery = query, ipodFocusIndex = 0) }
     }
 
     fun setLanguageFilter(language: TrackLanguage) {
@@ -1968,17 +2019,13 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun ipodLibraryTracks(st: CorvixUiState): List<Track> {
-        val q = st.searchQuery.trim().lowercase()
-        return if (q.isEmpty()) {
-            st.tracks
-        } else {
-            st.tracks.filter {
-                it.title.lowercase().contains(q) ||
-                    it.artist.lowercase().contains(q) ||
-                    it.album.lowercase().contains(q) ||
-                    it.genre.lowercase().contains(q)
-            }
-        }
+        return filterAndRankTracks(
+            tracks = st.tracks,
+            query = st.searchQuery,
+            selectedLanguage = TrackLanguage.ALL,
+            librarySortOrder = st.librarySortOrder,
+            playCounts = st.playCounts
+        )
     }
 
     fun ipodMenuAction() {

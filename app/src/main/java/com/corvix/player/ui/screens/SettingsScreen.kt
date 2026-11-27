@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.corvix.player.BuildConfig
 import com.corvix.player.model.AppScreen
 import com.corvix.player.model.AppSkin
 import com.corvix.player.model.AppTypography
@@ -784,6 +785,32 @@ fun SettingsScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text("Show Codec Badge on Widget", style = font.style(12f, FontWeight.Normal, palette.textMuted))
                         GlassToggleSwitch(checked = state.showWidgetCodecBadge, onCheckedChange = { viewModel.setShowWidgetCodecBadge(it) })
+                    }
+                }
+            }
+        }
+
+        // 9. App Version & Release Info
+        item(key = "app_version") {
+            GlassSurface(contentPadding = PaddingValues(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Corvix Version", style = font.style(12.5f, FontWeight.Bold, palette.textPrimary))
+                        Text("Offline lossless audio player", style = font.style(11.5f, FontWeight.Normal, palette.textMuted))
+                    }
+                    GlassPill(
+                        onClick = { },
+                        active = true,
+                        padding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            style = font.style(11.5f, FontWeight.SemiBold, palette.activePillContent, mono = true)
+                        )
                     }
                 }
             }

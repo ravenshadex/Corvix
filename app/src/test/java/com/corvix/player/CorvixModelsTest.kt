@@ -76,6 +76,22 @@ class CorvixModelsTest {
         val byDuration = CorvixUiState(tracks = sample, librarySortOrder = LibrarySortOrder.DURATION).filteredTracks
         val durations = byDuration.map { it.durationSec }
         assertEquals(durations.sortedDescending(), durations)
+
+        val firstSample = sample.first()
+        val firstWordTitle = firstSample.title.trim().split(Regex("\\s+")).first()
+        val firstWordArtist = firstSample.artist.trim().split(Regex("\\s+")).first()
+        val multiToken = CorvixUiState(
+            tracks = sample,
+            searchQuery = "$firstWordArtist $firstWordTitle"
+        ).filteredTracks
+        assertTrue(multiToken.any { it.id == firstSample.id })
+
+        val prefixMatches = CorvixUiState(
+            tracks = sample,
+            searchQuery = firstWordTitle
+        ).filteredTracks
+        assertTrue(prefixMatches.isNotEmpty())
+        assertTrue(prefixMatches.first().title.lowercase().contains(firstWordTitle.lowercase()))
     }
 
     @Test

@@ -1,5 +1,26 @@
 package com.corvix.player.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,8 +54,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -47,6 +71,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,8 +80,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -68,7 +96,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -95,6 +126,7 @@ import com.corvix.player.ui.theme.LocalCorvixPalette
 import com.corvix.player.ui.theme.liquidGlassSurface
 import com.corvix.player.viewmodel.CorvixUiState
 import com.corvix.player.viewmodel.CorvixViewModel
+import com.corvix.player.viewmodel.filterAndRankTracks
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -175,15 +207,14 @@ fun LibraryScreen(
     }
 
     if (palette.isIpod) {
-        val q = state.searchQuery.trim().lowercase()
-        val ipodTracks = remember(state.tracks, state.searchQuery) {
-            if (q.isEmpty()) state.tracks
-            else state.tracks.filter {
-                it.title.lowercase().contains(q) ||
-                    it.artist.lowercase().contains(q) ||
-                    it.album.lowercase().contains(q) ||
-                    it.genre.lowercase().contains(q)
-            }
+        val ipodTracks = remember(state.tracks, state.searchQuery, state.librarySortOrder, state.playCounts) {
+            filterAndRankTracks(
+                tracks = state.tracks,
+                query = state.searchQuery,
+                selectedLanguage = TrackLanguage.ALL,
+                librarySortOrder = state.librarySortOrder,
+                playCounts = state.playCounts
+            )
         }
         val ipodGrouped = remember(ipodTracks, state.libraryView) {
             when (state.libraryView) {
@@ -275,6 +306,18 @@ fun LibraryScreen(
     }
 
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val isSearching = state.searchQuery.isNotBlank()
+    val isSearchEngaged = isSearchFocused || isSearching
+
+    LaunchedEffect(isSearching) {
+        if (isSearching && listState.firstVisibleItemIndex > 1) {
+            listState.animateScrollToItem(1)
+        }
+    }
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -287,6 +330,11 @@ fun LibraryScreen(
         ) {
             // Header Row
             item(key = "header", contentType = "lib_header") {
+                val headerIconScale by animateFloatAsState(
+                    targetValue = if (isSearchEngaged) 1.06f else 1.0f,
+                    animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMedium),
+                    label = "header_search_scale"
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -297,48 +345,49 @@ fun LibraryScreen(
                         Text("${state.indexedTrackCount} tracks · On device", style = font.style(12.5f, FontWeight.Normal, palette.textMuted))
                     }
                     GlassPill(
-                        onClick = { runCatching { searchFocusRequester.requestFocus() } },
-                        modifier = Modifier.size(44.dp),
+                        onClick = {
+                            scope.launch {
+                                listState.animateScrollToItem(1)
+                                runCatching { searchFocusRequester.requestFocus() }
+                                keyboardController?.show()
+                            }
+                        },
+                        active = isSearchEngaged,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .scale(headerIconScale),
                         padding = PaddingValues(0.dp)
                     ) {
-                        Icon(Icons.Rounded.Search, contentDescription = "Search local files", tint = palette.textPrimary, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Rounded.Search,
+                            contentDescription = "Search local files",
+                            tint = if (isSearchEngaged) palette.activePillContent else palette.textPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
 
-            // Search Capsule (48dp height)
+            // Lively Liquid Glass Search Capsule (48dp height)
             item(key = "search") {
-                GlassSurface(
-                    cornerRadius = 999.dp,
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(Icons.Rounded.Search, null, tint = palette.textMuted, modifier = Modifier.size(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            if (state.searchQuery.isEmpty()) {
-                                Text(
-                                    text = "Search songs, artists, albums...",
-                                    style = font.style(12.5f, FontWeight.Normal, palette.textMuted)
-                                )
-                            }
-                            BasicTextField(
-                                value = state.searchQuery,
-                                onValueChange = { viewModel.updateSearchQuery(it) },
-                                singleLine = true,
-                                textStyle = font.style(12.5f, FontWeight.Normal, palette.textPrimary),
-                                cursorBrush = SolidColor(palette.accent),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .focusRequester(searchFocusRequester)
-                            )
+                LivelyLibrarySearchBar(
+                    query = state.searchQuery,
+                    resultCount = filteredTracks.size,
+                    isFocused = isSearchFocused,
+                    focusRequester = searchFocusRequester,
+                    onFocusChanged = { isSearchFocused = it },
+                    onQueryChange = { viewModel.updateSearchQuery(it) },
+                    onClear = {
+                        viewModel.updateSearchQuery("")
+                        if (!isSearchFocused) {
+                            runCatching { searchFocusRequester.requestFocus() }
                         }
+                    },
+                    onSubmitSearch = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
                     }
-                }
+                )
             }
 
             // Quick Action Pills (48dp equal-height Shuffle All & Sort)
@@ -402,13 +451,21 @@ fun LibraryScreen(
                 }
             }
 
-            // Recently Played Coverflow Carousel
+            // Recently Played Coverflow Carousel (smoothly collapses during active search so results lift immediately)
             item(key = "recent_shelf") {
-                RecentlyPlayedCoverflow(
-                    tracks = state.recentlyPlayedTracks,
-                    onPlayTrack = { viewModel.playTrackFromCarousel(it.id) },
-                    onLongPressTrack = { viewModel.openTrackActions(it.id) }
-                )
+                AnimatedVisibility(
+                    visible = !isSearching,
+                    enter = expandVertically(
+                        animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeIn(animationSpec = tween(240)),
+                    exit = shrinkVertically(animationSpec = tween(220)) + fadeOut(animationSpec = tween(160))
+                ) {
+                    RecentlyPlayedCoverflow(
+                        tracks = state.recentlyPlayedTracks,
+                        onPlayTrack = { viewModel.playTrackFromCarousel(it.id) },
+                        onLongPressTrack = { viewModel.openTrackActions(it.id) }
+                    )
+                }
             }
 
             // List Heading
@@ -418,11 +475,23 @@ fun LibraryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(state.libraryView.heading.uppercase(), style = font.style(11.5f, FontWeight.SemiBold, palette.textMuted))
                     Text(
-                        text = "${filteredTracks.size} tracks",
-                        style = font.style(10.5f, FontWeight.Normal, palette.textMuted)
+                        text = if (isSearching) "SEARCH RESULTS · ${state.libraryView.heading.uppercase()}" else state.libraryView.heading.uppercase(),
+                        style = font.style(11.5f, FontWeight.SemiBold, if (isSearching) palette.accentText else palette.textMuted)
                     )
+                    AnimatedContent(
+                        targetState = filteredTracks.size,
+                        transitionSpec = {
+                            (slideInVertically { -it / 2 } + fadeIn(tween(180)))
+                                .togetherWith(slideOutVertically { it / 2 } + fadeOut(tween(140)))
+                        },
+                        label = "track_count_anim"
+                    ) { count ->
+                        Text(
+                            text = if (isSearching) "$count match${if (count == 1) "" else "es"}" else "$count tracks",
+                            style = font.style(10.5f, if (isSearching) FontWeight.SemiBold else FontWeight.Normal, if (isSearching) palette.accentText else palette.textMuted)
+                        )
+                    }
                 }
             }
 
@@ -430,10 +499,10 @@ fun LibraryScreen(
             if (state.libraryView == LibraryView.SONGS) {
                 if (songRows.isEmpty()) {
                     item(key = "empty_songs", contentType = "empty_msg") {
-                        Text(
-                            text = "No matching local files.",
-                            style = font.style(12f, FontWeight.Normal, palette.textMuted),
-                            modifier = Modifier.padding(vertical = 18.dp)
+                        AnimatedSearchEmptyCard(
+                            query = state.searchQuery,
+                            isSearching = isSearching,
+                            onReset = { viewModel.updateSearchQuery("") }
                         )
                     }
                 } else {
@@ -442,12 +511,17 @@ fun LibraryScreen(
                         key = { it.key },
                         contentType = { if (it is LibraryRowItem.LangHeader) "lang_header" else "song_row" }
                     ) { item ->
+                        val rowAnimModifier = Modifier.animateItem(
+                            fadeInSpec = tween(220),
+                            fadeOutSpec = tween(160),
+                            placementSpec = spring(dampingRatio = 0.84f, stiffness = Spring.StiffnessMediumLow)
+                        )
                         when (item) {
                             is LibraryRowItem.LangHeader -> {
                                 Text(
                                     text = item.language.uppercase(),
                                     style = font.style(10f, FontWeight.Bold, palette.accentText),
-                                    modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                                    modifier = rowAnimModifier.padding(start = 8.dp, top = 4.dp)
                                 )
                             }
                             is LibraryRowItem.SongItem -> {
@@ -465,7 +539,8 @@ fun LibraryScreen(
                                     onEditTags = {
                                         val realIdx = state.tracks.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
                                         viewModel.openSheet(SheetType.TAGS, realIdx)
-                                    }
+                                    },
+                                    modifier = rowAnimModifier
                                 )
                             }
                         }
@@ -474,10 +549,10 @@ fun LibraryScreen(
             } else {
                 if (groupedEntries.isEmpty()) {
                     item(key = "empty_groups", contentType = "empty_msg") {
-                        Text(
-                            text = "No matching tracks.",
-                            style = font.style(12f, FontWeight.Normal, palette.textMuted),
-                            modifier = Modifier.padding(vertical = 18.dp)
+                        AnimatedSearchEmptyCard(
+                            query = state.searchQuery,
+                            isSearching = isSearching,
+                            onReset = { viewModel.updateSearchQuery("") }
                         )
                     }
                 } else {
@@ -490,6 +565,11 @@ fun LibraryScreen(
                         val firstTrack = items.first()
                         Row(
                             modifier = Modifier
+                                .animateItem(
+                                    fadeInSpec = tween(220),
+                                    fadeOutSpec = tween(160),
+                                    placementSpec = spring(dampingRatio = 0.84f, stiffness = Spring.StiffnessMediumLow)
+                                )
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
                                 .clickable { viewModel.playTrackById(firstTrack.id) }
@@ -521,6 +601,298 @@ fun LibraryScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LivelyLibrarySearchBar(
+    query: String,
+    resultCount: Int,
+    isFocused: Boolean,
+    focusRequester: FocusRequester,
+    onFocusChanged: (Boolean) -> Unit,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    onSubmitSearch: () -> Unit
+) {
+    val palette = LocalCorvixPalette.current
+    val font = LocalCorvixFont.current
+    val isActive = isFocused || query.isNotEmpty()
+
+    val containerScale by animateFloatAsState(
+        targetValue = if (isFocused) 1.018f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessMedium),
+        label = "search_bar_scale"
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (isFocused) 1.18f else if (query.isNotEmpty()) 1.08f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium),
+        label = "search_icon_scale"
+    )
+    val iconTint by animateColorAsState(
+        targetValue = if (isActive) palette.accentText else palette.textMuted,
+        animationSpec = tween(220),
+        label = "search_icon_tint"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = when {
+            isFocused -> palette.accent.copy(alpha = 0.72f)
+            query.isNotEmpty() -> palette.accent.copy(alpha = 0.45f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(240),
+        label = "search_border_color"
+    )
+
+    val shimmerProgress = if (isActive) {
+        val inf = rememberInfiniteTransition(label = "search_shimmer")
+        inf.animateFloat(
+            initialValue = -0.35f,
+            targetValue = 1.35f,
+            animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Restart),
+            label = "shimmer_x"
+        ).value
+    } else {
+        -1f
+    }
+
+    val hints = remember {
+        listOf(
+            "Search songs, artists, albums...",
+            "Try artist + title together...",
+            "Filter by FLAC, WAV, MP3...",
+            "Search language or genre..."
+        )
+    }
+    var hintIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(query.isEmpty(), isFocused) {
+        if (query.isEmpty() && !isFocused) {
+            while (true) {
+                delay(2800)
+                hintIndex = (hintIndex + 1) % hints.size
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(containerScale)
+            .clip(RoundedCornerShape(999.dp))
+            .then(
+                if (borderColor.alpha > 0.01f) {
+                    Modifier.border(1.2.dp, borderColor, RoundedCornerShape(999.dp))
+                } else {
+                    Modifier
+                }
+            )
+    ) {
+        GlassSurface(
+            cornerRadius = 999.dp,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .then(
+                    if (isActive && shimmerProgress >= -0.35f) {
+                        Modifier.drawWithContent {
+                            drawContent()
+                            val x = shimmerProgress * size.width
+                            drawRect(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        palette.accent.copy(alpha = 0.14f),
+                                        Color.White.copy(alpha = 0.12f),
+                                        Color.Transparent
+                                    ),
+                                    start = Offset(x - size.height * 1.4f, 0f),
+                                    end = Offset(x + size.height * 1.4f, size.height)
+                                )
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (isActive) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .background(
+                                    Brush.radialGradient(
+                                        listOf(palette.accent.copy(alpha = 0.28f), Color.Transparent)
+                                    ),
+                                    CircleShape
+                                )
+                        )
+                    }
+                    Icon(
+                        Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .scale(iconScale)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (query.isEmpty()) {
+                        val activeHint = if (isFocused) "Type title, artist, album, format..." else hints[hintIndex]
+                        AnimatedContent(
+                            targetState = activeHint,
+                            transitionSpec = {
+                                (slideInVertically { it / 2 } + fadeIn(tween(220)))
+                                    .togetherWith(slideOutVertically { -it / 2 } + fadeOut(tween(180)))
+                            },
+                            label = "search_hint_cycle"
+                        ) { labelText ->
+                            Text(
+                                text = labelText,
+                                style = font.style(12.5f, FontWeight.Normal, palette.textMuted),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        singleLine = true,
+                        textStyle = font.style(12.5f, FontWeight.Medium, palette.textPrimary),
+                        cursorBrush = SolidColor(palette.accent),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { onSubmitSearch() }),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { onFocusChanged(it.isFocused) }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = query.isNotEmpty(),
+                    enter = scaleIn(
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                    ) + fadeIn(tween(180)),
+                    exit = scaleOut(tween(140)) + fadeOut(tween(120))
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(palette.accent.copy(alpha = 0.16f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            AnimatedContent(
+                                targetState = resultCount,
+                                transitionSpec = {
+                                    (slideInVertically { -it / 2 } + fadeIn(tween(150)))
+                                        .togetherWith(slideOutVertically { it / 2 } + fadeOut(tween(120)))
+                                },
+                                label = "search_badge_count"
+                            ) { count ->
+                                Text(
+                                    text = "$count",
+                                    style = font.style(10.5f, FontWeight.Bold, palette.accentText, mono = true)
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (palette.isDark) Color.White.copy(alpha = 0.14f)
+                                    else Color(0xFF0F172A).copy(alpha = 0.08f)
+                                )
+                                .clickable(onClick = onClear),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.Close,
+                                contentDescription = "Clear search",
+                                tint = palette.textPrimary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedSearchEmptyCard(
+    query: String,
+    isSearching: Boolean,
+    onReset: () -> Unit
+) {
+    val palette = LocalCorvixPalette.current
+    val font = LocalCorvixFont.current
+    val inf = rememberInfiniteTransition(label = "empty_search_pulse")
+    val pulseScale by inf.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(tween(1100), RepeatMode.Reverse),
+        label = "empty_icon_pulse"
+    )
+
+    GlassSurface(
+        cornerRadius = 20.dp,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .scale(pulseScale)
+                    .clip(CircleShape)
+                    .background(palette.accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = palette.accentText,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Text(
+                text = if (isSearching) "No matching tracks for \"${query.trim()}\"" else "No matching local files.",
+                style = font.style(12.5f, FontWeight.SemiBold, palette.textPrimary),
+                textAlign = TextAlign.Center
+            )
+            if (isSearching) {
+                GlassPill(
+                    onClick = onReset,
+                    active = true,
+                    padding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text("Reset Search", style = font.style(11.5f, FontWeight.SemiBold, palette.activePillContent))
                 }
             }
         }

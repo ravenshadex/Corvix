@@ -1,5 +1,13 @@
 # Corvix Changelog
 
+## v1.0.4 (Build 5)
+### Real Liquid Glass UI, Now Playing Redesign & Release Signing
+- **Real Liquid Glass Material System:** Updated `LiquidGlass.kt` with rounded-rectangle SDF edge-refraction AGSL shaders (eliminating inner rectangle artifacts), outer-only `ClipOp.Difference` drop shadows, stronger `0..100` glass blur & prism dispersion, and frosted `94%` smoked-crystal backing on the Mini-Player, Dock, and Lyrics Manager.
+- **Redesigned Now Playing & Pull-Up Queue:** Edge-to-edge status bar & flush bottom `UP NEXT` sheet with live vertical drag-to-expand, drag-to-reorder (`=`) tracks, shuffle-synced queue order, iOS-style heart favorite icon, 4-pill utility bar (`EQ`, `Speed`, `Sleep Timer`, `Lyrics`), and spacious in-place Lyrics view.
+- **2-Page Liquid Glass Onboarding & Clean Fresh Install:** Replaced the onboarding flow with a 2-page Real Liquid Glass welcome & permissions experience and removed all wireframe/sample track defaults and initial playback state.
+- **Live IEM / USB DAC Detection & Skin Polish:** Added `AudioDeviceCallback` hardware output detection (showing connected USB DAC / Wired IEM / Bluetooth device names), collapsible `Liquid Glass Engine` settings, interactive Profile category drill-down, Classic iPod skin chooser submenu, Winamp Classic clutterbar cleanup, and tablet/landscape layout polish.
+- **Signed Release Universal APK:** Configured v1 + v2 + v3 release signing in `app/build.gradle.kts`.
+
 ## v1.0.3 (Build 4)
 ### Hotfix
 - **Restored Media Notification Bar & Seek Bar Slider:** Replaced Kotlin interface delegation (`Player.Listener by listener`) in `CorvixPlaybackService` with an explicit `CommandAugmentingPlayerListener` forwarding all 37 `Player.Listener` callbacks (including `onTimelineChanged`, `onPlaybackStateChanged`, `onIsPlayingChanged`, `onMediaItemTransition`, `onPositionDiscontinuity`, and `onAvailableCommandsChanged`). Kotlin delegation over Java default interface methods previously dropped playback/timeline updates to `MediaSession` & `MediaController`, which hid the notification bar and blocked seeking while still advertising Next/Previous skip commands.

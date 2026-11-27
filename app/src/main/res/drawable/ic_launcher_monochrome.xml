@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Headphones band + earcups -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M54,24C37.43,24 24,37.43 24,54v14c0,4.42 3.58,8 8,8h4c2.21,0 4,-1.79 4,-4V56c0,-2.21 -1.79,-4 -4,-4h-6.5c1.1,-12.35 11.48,-22 24.5,-22s23.4,9.65 24.5,22H72c-2.21,0 -4,1.79 -4,4v16c0,2.21 1.79,4 4,4h4c4.42,0 8,-3.58 8,-8V54C84,37.43 70.57,24 54,24z" />
+    <!-- Center lightning bolt -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M57,34L41,57h11l-3,19l18,-25H56L57,34z" />
+</vector>

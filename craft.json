@@ -1,0 +1,39 @@
+{
+  "version": 5,
+  "name": "Corvix",
+  "request": "what can i do to make it better",
+  "target": {
+    "kind": "none"
+  },
+  "stack": "Builder's choice",
+  "status": "stopped",
+  "note": "Paused. Send a message to continue.",
+  "created_ms": 1795700319024,
+  "updated_ms": 1795700583760,
+  "checks": [],
+  "agent_session": null,
+  "agent_session_by": "opencode",
+  "capture_deep": false,
+  "allowed_actions": [],
+  "last_reply": "",
+  "asset_budget_usd": 5.0,
+  "generate_assets": false,
+  "app_in_root": true,
+  "start_files": [
+    ".gradle",
+    ".kotlin",
+    "Corvis icon.png",
+    "Corvix Lightning Headphones Icon.png",
+    "Corvix_2K.png",
+    "Corvix_8K_clean.png",
+    "app",
+    "build.gradle.kts",
+    "gradle",
+    "gradle.properties",
+    "gradlew",
+    "gradlew.bat",
+    "local.properties",
+    "settings.gradle.kts",
+    "skins"
+  ]
+}

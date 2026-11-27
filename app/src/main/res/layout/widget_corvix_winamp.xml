@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_winamp_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_winamp_bg"
+    android:orientation="vertical"
+    android:padding="7dp">
+
+    <!-- Top WINAMP Title Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="3dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="#FFD8B95B" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="WINAMP"
+            android:textColor="#FFD8B95B"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="3dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="#FFD8B95B" />
+    </LinearLayout>
+
+    <!-- Middle Split: Left LCD Display Box + Right Track Info Box -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Left LCD Display Box -->
+        <LinearLayout
+            android:id="@+id/widget_winamp_lcd_box"
+            android:layout_width="96dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/widget_winamp_lcd_bg"
+            android:orientation="vertical"
+            android:padding="5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/widget_winamp_status_glyph"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="▶"
+                    android:textColor="#FF00FF00"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/widget_winamp_time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="monospace"
+                    android:gravity="end"
+                    android:text="00:00"
+                    android:textColor="#FF00FF00"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Spectrum Visualizer Bar -->
+            <ProgressBar
+                android:id="@+id/widget_winamp_spectrum"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:layout_marginTop="6dp"
+                android:max="100"
+                android:progress="62"
+                android:progressDrawable="@drawable/widget_winamp_seek_progress" />
+        </LinearLayout>
+
+        <!-- Right Track Info Box -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Scrolling Marquee Title -->
+            <TextView
+                android:id="@+id/widget_winamp_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_winamp_lcd_bg"
+                android:ellipsize="marquee"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:fontFamily="monospace"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
+                android:text="CORVIX HI-FI ENGINE"
+                android:textColor="#FF00E800"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
+
+            <!-- kbps | kHz | mono/stereo | EQ | PL -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/widget_winamp_kbps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/widget_winamp_lcd_bg"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:text="320"
+                    android:textColor="#FF00FF00"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="kbps"
+                    android:textColor="#FFA4ABC2"
+                    android:textSize="8sp" />
+
+                <TextView
+                    android:id="@+id/widget_winamp_khz"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/widget_winamp_lcd_bg"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:text="44"
+                    android:textColor="#FF00FF00"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:layout_weight="1"
+                    android:text="kHz · STEREO"
+                    android:textColor="#FF00E800"
+                    android:textSize="8sp" />
+
+                <TextView
+                    android:id="@+id/widget_winamp_eq"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="3dp"
+                    android:background="@drawable/widget_winamp_btn_bg"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="5dp"
+                    android:paddingVertical="1dp"
+                    android:text="EQ"
+                    android:textColor="#FF00FF00"
+                    android:textSize="8.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/widget_winamp_pl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/widget_winamp_btn_bg"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="5dp"
+                    android:paddingVertical="1dp"
+                    android:text="PL"
+                    android:textColor="#FF00FF00"
+                    android:textSize="8.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Seek Progress Bar -->
+    <ProgressBar
+        android:id="@+id/widget_winamp_seek"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="7dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:max="100"
+        android:progress="25"
+        android:progressDrawable="@drawable/widget_winamp_seek_progress" />
+
+    <!-- Bottom Transport Row: Prev, Play, Pause, Stop, Next, Shuffle, Bolt -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="26dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_winamp_prev"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="|&lt;"
+            android:textColor="#FFE2E8F0"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_play"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="▶"
+            android:textColor="#FF00FF00"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_pause"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="⏸"
+            android:textColor="#FFE2E8F0"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_stop"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="■"
+            android:textColor="#FFE2E8F0"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_next"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:text="&gt;|"
+            android:textColor="#FFE2E8F0"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_shuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:paddingHorizontal="7dp"
+            android:text="SHUF"
+            android:textColor="#FFA4ABC2"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_winamp_bolt"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/widget_winamp_btn_bg"
+            android:gravity="center"
+            android:text="⚡"
+            android:textColor="#FFFFD000"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

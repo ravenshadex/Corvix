@@ -1,0 +1,31 @@
+# Gradle & Kotlin caches
+.gradle/
+.kotlin/
+build/
+app/build/
+
+# Local SDK / IDE configuration
+local.properties
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+captures/
+.navigation/
+
+# Build outputs & packages
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.log
+
+# Keystores & secrets
+*.jks
+*.keystore
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

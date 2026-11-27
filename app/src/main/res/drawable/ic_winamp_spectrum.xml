@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:maxLevel="0">
+        <vector android:width="104dp" android:height="20dp" android:viewportWidth="104" android:viewportHeight="20">
+            <path android:fillColor="#FF00E600" android:pathData="M2,17h6v2h-6z M10,16h6v3h-6z M18,17h6v2h-6z M26,15h6v4h-6z M34,17h6v2h-6z M42,16h6v3h-6z M50,17h6v2h-6z M58,15h6v4h-6z M66,17h6v2h-6z M74,16h6v3h-6z M82,17h6v2h-6z M90,16h6v3h-6z" />
+        </vector>
+    </item>
+    <item android:maxLevel="1">
+        <vector android:width="104dp" android:height="20dp" android:viewportWidth="104" android:viewportHeight="20">
+            <path android:fillColor="#FF00E600" android:pathData="M2,10h6v9h-6z M10,8h6v11h-6z M18,12h6v7h-6z M26,6h6v13h-6z M34,9h6v10h-6z M42,13h6v6h-6z M50,7h6v12h-6z M58,10h6v9h-6z M66,14h6v5h-6z M74,8h6v11h-6z M82,11h6v8h-6z M90,13h6v6h-6z" />
+            <path android:fillColor="#FFD4AF37" android:pathData="M10,5h6v3h-6z M26,3h6v3h-6z M50,4h6v3h-6z M74,5h6v3h-6z" />
+            <path android:fillColor="#FFFF3333" android:pathData="M26,1h6v2h-6z" />
+        </vector>
+    </item>
+    <item android:maxLevel="2">
+        <vector android:width="104dp" android:height="20dp" android:viewportWidth="104" android:viewportHeight="20">
+            <path android:fillColor="#FF00E600" android:pathData="M2,13h6v6h-6z M10,11h6v8h-6z M18,7h6v12h-6z M26,10h6v9h-6z M34,6h6v13h-6z M42,9h6v10h-6z M50,12h6v7h-6z M58,7h6v12h-6z M66,9h6v10h-6z M74,11h6v8h-6z M82,8h6v11h-6z M90,10h6v9h-6z" />
+            <path android:fillColor="#FFD4AF37" android:pathData="M18,4h6v3h-6z M34,3h6v3h-6z M58,4h6v3h-6z M82,5h6v3h-6z" />
+            <path android:fillColor="#FFFF3333" android:pathData="M34,1h6v2h-6z" />
+        </vector>
+    </item>
+    <item android:maxLevel="3">
+        <vector android:width="104dp" android:height="20dp" android:viewportWidth="104" android:viewportHeight="20">
+            <path android:fillColor="#FF00E600" android:pathData="M2,8h6v11h-6z M10,12h6v7h-6z M18,9h6v10h-6z M26,13h6v6h-6z M34,10h6v9h-6z M42,6h6v13h-6z M50,9h6v10h-6z M58,12h6v7h-6z M66,6h6v13h-6z M74,10h6v9h-6z M82,13h6v6h-6z M90,8h6v11h-6z" />
+            <path android:fillColor="#FFD4AF37" android:pathData="M2,5h6v3h-6z M42,3h6v3h-6z M66,3h6v3h-6z M90,5h6v3h-6z" />
+            <path android:fillColor="#FFFF3333" android:pathData="M42,1h6v2h-6z M66,1h6v2h-6z" />
+        </vector>
+    </item>
+</level-list>

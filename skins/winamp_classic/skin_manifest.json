@@ -1,0 +1,121 @@
+{
+  "skinId": "winamp_classic",
+  "targetApp": "Corvix",
+  "targetPackage": "com.corvix.player",
+  "suggestedEnumEntry": "AppSkin.WINAMP_CLASSIC",
+  "displayName": "Winamp Classic 2.91",
+  "subtitle": "Pixel-exact 3-window Classic Winamp rack (Main + 10-Band EQ + Playlist)",
+  "referenceImage": "reference_screenshot.png",
+  "virtualCoordinateGrid": {
+    "baseWidthUnits": 275,
+    "scalingRule": "uniformScale = viewportWidthPx / 275f (FilterQuality.None)",
+    "windows": [
+      {
+        "id": "MAIN",
+        "title": "WINAMP",
+        "virtualSize": { "width": 275, "height": 116 },
+        "collapsible": true,
+        "shadeHeight": 14
+      },
+      {
+        "id": "EQUALIZER",
+        "title": "WINAMP EQUALIZER",
+        "virtualSize": { "width": 275, "height": 116 },
+        "collapsible": true,
+        "toggleBinding": "CorvixUiState.eqEnabled / local eqPanelVisible"
+      },
+      {
+        "id": "PLAYLIST",
+        "title": "WINAMP PLAYLIST",
+        "virtualSize": { "width": 275, "minHeight": 116, "height": "fillRemaining" },
+        "collapsible": true,
+        "toggleBinding": "local playlistPanelVisible"
+      }
+    ]
+  },
+  "palette": {
+    "chassisBgTop": "#282A3E",
+    "chassisBgMid": "#1D1F30",
+    "chassisBgBot": "#24273A",
+    "frameOuterBorder": "#090B12",
+    "bevelLight": "#5B627B",
+    "bevelDark": "#141622",
+    "titlebarBg": "#222436",
+    "titlebarGoldTop": "#D8B95B",
+    "titlebarGoldShadow": "#9A8033",
+    "titlebarText": "#FFFFFF",
+    "lcdBg": "#000000",
+    "lcdDotGrid": "#181B24",
+    "lcdGreen": "#00FF00",
+    "lcdTrackGreen": "#00E800",
+    "lcdDimText": "#7A8198",
+    "clutterText": "#8F96AD",
+    "spectrumGreen": "#00FF00",
+    "spectrumLime": "#A8FF00",
+    "spectrumAmber": "#FFD000",
+    "spectrumRed": "#FF3300",
+    "spectrumPeak": "#8B93A8",
+    "volumeFillStart": "#DE7814",
+    "volumeFillEnd": "#F29B2E",
+    "balanceFill": "#00C800",
+    "seekShuttleLight": "#E8C97A",
+    "seekShuttleDark": "#A88435",
+    "buttonFace": "#D6DCE8",
+    "buttonHighlight": "#F2F6FF",
+    "buttonShadow": "#5C6378",
+    "buttonGlyph": "#252938",
+    "ledActiveGreen": "#00D800",
+    "eqGraphBg": "#25293E",
+    "eqGraphGrid": "#414866",
+    "eqGraphCurve": "#FFE600",
+    "eqScaleText": "#E0B030",
+    "eqTroughTop": "#E6D615",
+    "eqTroughMid": "#B5CE1E",
+    "eqTroughBot": "#74AE23",
+    "playlistBg": "#000000",
+    "playlistText": "#00E800",
+    "playlistPlayingText": "#FFFFFF",
+    "playlistSelectedBg": "#0000C0",
+    "scrollbarThumb": "#D8BE6E"
+  },
+  "equalizerBands": ["70", "180", "320", "600", "1K", "3K", "6K", "12K", "14K", "16K"],
+  "corvixStateBindings": {
+    "mainDisplay": {
+      "clockTimer": "elapsedSecFlow (tap toggles elapsed / remaining)",
+      "marqueeTicker": "currentIndex+1 + '. ' + currentTrack.artist + ' - ' + currentTrack.title + ' (' + currentTrack.durationFormatted + ')'",
+      "kbpsBadge": "parsed from currentTrack.bitrateInfo",
+      "khzBadge": "parsed from currentTrack.formatLabel / activeSink.rateLabel",
+      "stereoIndicator": "always 'stereo' lit #00FF00 (or mono when channelCount == 1)",
+      "spectrumCanvas": "CorvixAudioController / Visualizer FFT -> 19-band segmented LED + peak hold",
+      "volumeSlider": "volumePct (0..100)",
+      "seekBar": "elapsedSecFlow / currentTrack.durationSec",
+      "transportButtons": ["previousTrack()", "playOrResume()", "togglePlayPause()", "stopPlayback()", "nextTrack()", "openFoldersOrLibrary()"],
+      "shuffleToggle": "isShuffle -> toggleShuffle()",
+      "repeatToggle": "repeatMode -> cycleRepeat()",
+      "eqToggle": "toggles WINAMP EQUALIZER window visibility",
+      "plToggle": "toggles WINAMP PLAYLIST window visibility",
+      "clutterbarOAIDV": {
+        "O": "open Corvix Settings / Skin Switcher",
+        "A": "toggle Always-On / Mini Overlay",
+        "I": "open TAGS / Track Info sheet",
+        "D": "toggle Window-Shade double/compact mode",
+        "V": "toggle Visualizer mode"
+      }
+    },
+    "equalizerModule": {
+      "onToggle": "eqEnabled -> toggleEqualizer()",
+      "autoToggle": "autoEqProfile",
+      "presetsButton": "cycles EqPreset / opens EQ Preset dialog",
+      "preampAnd10Bands": "eqBandsDb (10 bands mapped to 70Hz..16kHz)"
+    },
+    "playlistModule": {
+      "trackList": "tracks / activeQueue (1-based numbered, #00E800 normal, #FFFFFF playing)",
+      "addButton": "open Folders / local library picker",
+      "remButton": "remove selected track from queue",
+      "selButton": "select / filter",
+      "miscButton": "open Queue / Sort / Lyrics options",
+      "listOptsButton": "open Playlists screen / M3U8 options",
+      "miniTransportAndTotalTime": "currentPos / totalQueueDuration + mini transport icons"
+    }
+  }
+}

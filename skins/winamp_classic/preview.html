@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Winamp Classic Skin — 1:1 Corvix Port &amp; Wireframe</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* Authentic Winamp 2.91 Skin Surfaces matching reference screenshot */
+    .wa-window {
+      background: linear-gradient(180deg, #292b40 0%, #1d1f30 48%, #25283b 100%);
+      border-top: 1px solid #636a84;
+      border-left: 1px solid #636a84;
+      border-right: 1px solid #090b12;
+      border-bottom: 1px solid #090b12;
+      box-shadow: inset 0 0 0 1px #161826;
+    }
+    .wa-titlebar {
+      background: linear-gradient(180deg, #2d3047 0%, #1c1e2e 100%);
+      border-bottom: 1px solid #0b0d15;
+    }
+    .wa-gold-bars {
+      height: 7px;
+      border-top: 2px solid #d8b95b;
+      border-bottom: 1px solid #9a8033;
+      box-shadow: inset 0 1px 0 #f2dc8e, 0 1px 0 #10121c;
+    }
+    .wa-lcd-dots {
+      background-color: #000000;
+      background-image: radial-gradient(#1b1f29 1px, transparent 1px);
+      background-size: 3px 3px;
+      border-top: 1px solid #08090e;
+      border-left: 1px solid #08090e;
+      border-right: 1px solid #596078;
+      border-bottom: 1px solid #596078;
+    }
+    .wa-black-inset {
+      background: #000000;
+      border-top: 1px solid #08090e;
+      border-left: 1px solid #08090e;
+      border-right: 1px solid #596078;
+      border-bottom: 1px solid #596078;
+    }
+    .wa-silver-btn {
+      background: linear-gradient(180deg, #e5e9f2 0%, #cfd5e3 45%, #aeb6c9 100%);
+      border-top: 1px solid #ffffff;
+      border-left: 1px solid #f4f7ff;
+      border-right: 1px solid #484f63;
+      border-bottom: 1px solid #3c4254;
+      color: #202534;
+    }
+    .wa-silver-btn:active {
+      background: linear-gradient(180deg, #aeb6c9 0%, #cfd5e3 100%);
+      border-top: 1px solid #3c4254;
+      border-left: 1px solid #3c4254;
+      border-right: 1px solid #ffffff;
+      border-bottom: 1px solid #ffffff;
+    }
+    .wa-mini-winbtn {
+      background: linear-gradient(180deg, #cfd5e3 0%, #8f96ab 100%);
+      border-top: 1px solid #eef2ff;
+      border-left: 1px solid #eef2ff;
+      border-right: 1px solid #181b26;
+      border-bottom: 1px solid #181b26;
+      color: #161924;
+    }
+    .wa-seek-groove {
+      background: #0d0f18;
+      border-top: 1px solid #05060b;
+      border-left: 1px solid #05060b;
+      border-right: 1px solid #525970;
+      border-bottom: 1px solid #525970;
+    }
+    .wa-seek-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 16px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .wa-seek-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 34px;
+      height: 13px;
+      background: linear-gradient(180deg, #f3dc93 0%, #d5b257 52%, #9a792d 100%);
+      border-top: 1px solid #fff3c4;
+      border-left: 1px solid #fff3c4;
+      border-right: 1px solid #3b2d0b;
+      border-bottom: 1px solid #3b2d0b;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22);
+    }
+
+    /* Volume & Balance horizontal grooved thumbs */
+    .wa-hslider-wrap {
+      position: relative;
+      height: 14px;
+      display: flex;
+      align-items: center;
+    }
+    .wa-hslider-track {
+      width: 100%;
+      height: 7px;
+      border-radius: 3px;
+      border-top: 1px solid #090b11;
+      border-left: 1px solid #090b11;
+      border-right: 1px solid #4d546b;
+      border-bottom: 1px solid #4d546b;
+    }
+    .wa-hslider-input {
+      -webkit-appearance: none;
+      appearance: none;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      cursor: pointer;
+    }
+    .wa-hslider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 13px;
+      background: repeating-linear-gradient(90deg, #dce1ee 0px, #dce1ee 2px, #687085 2px, #687085 4px);
+      border-top: 1px solid #ffffff;
+      border-left: 1px solid #ffffff;
+      border-right: 1px solid #1c202d;
+      border-bottom: 1px solid #1c202d;
+    }
+
+    /* Equalizer vertical faders with yellow-to-green trough & grooved metallic cap */
+    .wa-eq-col {
+      position: relative;
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wa-eq-trough {
+      position: absolute;
+      width: 8px;
+      height: 74px;
+      background: linear-gradient(180deg, #ead714 0%, #b5ce1d 52%, #72ad22 100%);
+      border-top: 1px solid #0b0d14;
+      border-left: 1px solid #0b0d14;
+      border-right: 1px solid #5c637a;
+      border-bottom: 1px solid #5c637a;
+      pointer-events: none;
+    }
+    .wa-eq-trough-wf {
+      background: var(--background);
+      border: 1px dashed var(--border);
+    }
+    .wa-eq-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 74px;
+      height: 26px;
+      transform: rotate(-90deg);
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+    }
+    .wa-eq-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 16px;
+      background: repeating-linear-gradient(180deg, #dce2f0 0px, #dce2f0 2px, #6a7288 2px, #6a7288 4px);
+      border-top: 1px solid #ffffff;
+      border-left: 1px solid #ffffff;
+      border-right: 1px solid #1a1e2b;
+      border-bottom: 1px solid #1a1e2b;
+    }
+
+    /* Blueprint wireframe hatch & touch overlay */
+    .wf-hatch {
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, color-mix(in srgb, var(--border) 45%, transparent) 5px, color-mix(in srgb, var(--border) 45%, transparent) 6px);
+    }
+    .touch-overlay-active [data-dp] {
+      outline: 1.5px dashed #10b981 !important;
+      outline-offset: -1px;
+      position: relative;
+    }
+    .touch-overlay-active [data-dp]::after {
+      content: attr(data-dp);
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-size: 9px;
+      line-height: 1;
+      padding: 1px 3px;
+      background: rgba(16, 185, 129, 0.92);
+      color: #052e16;
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    .wa-scroll::-webkit-scrollbar { width: 10px; }
+    .wa-scroll::-webkit-scrollbar-track { background: #141722; border-left: 1px solid #080a10; }
+    .wa-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #f0dc98 0%, #c8a750 55%, #947629 100%);
+      border: 1px solid #1d1f2d;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-0 min-h-screen">
+
+  <!-- Studio Header -->
+  <header class="sticky top-0 z-40 bg-[var(--card)] border-b border-[var(--border)] px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded bg-amber-400 text-slate-950 flex items-center justify-center font-bold shadow-sm">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 11-12h-6l-1-8z"/></svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight flex items-center gap-2">
+            Winamp Classic Skin — Saved for Corvix
+            <span class="text-xs px-2 py-0.5 rounded border border-[var(--border)] text-[var(--muted-foreground)] mono">275px Scaled 1:1</span>
+          </h1>
+          <p class="text-xs text-[var(--muted-foreground)]">Exact replica of your reference Winamp layout · Saved at <span class="mono">Corvix\skins\winamp_classic</span></p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center bg-[var(--background)] p-1 rounded-lg border border-[var(--border)]">
+          <button data-mode="classic" class="mode-btn px-3 py-1 rounded text-xs font-semibold">1:1 Winamp Skin</button>
+          <button data-mode="wireframe" class="mode-btn px-3 py-1 rounded text-xs font-semibold">Blueprint Wireframe</button>
+        </div>
+        <button id="toggle-dp" class="px-2.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold">48dp Hitboxes</button>
+        <button id="toggle-pins" class="px-2.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold">UX Pins</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Left: Interactive Android Phone Viewport (pure 1:1 Winamp inside!) -->
+    <div class="lg:col-span-5 flex flex-col items-center gap-2">
+      <div id="phone-shell" class="relative w-[364px] h-[752px] rounded-[28px] p-2 bg-[var(--card)] border-2 border-[var(--border)] shadow-2xl flex flex-col">
+        <!-- Android System Status Bar -->
+        <div class="flex items-center justify-between px-4 pt-1 pb-1.5 text-xs mono select-none">
+          <span class="font-semibold">16:05</span>
+          <div class="w-3 h-3 rounded-full border border-[var(--border)] bg-[var(--background)]"></div>
+          <span class="text-[var(--muted-foreground)]">CORVIX · SKIN</span>
+        </div>
+
+        <!-- Pure Edge-to-Edge 1:1 Winamp 3-Window Stack -->
+        <div id="phone-canvas" class="relative flex-1 rounded-[14px] overflow-hidden flex flex-col border border-[var(--border)]"></div>
+
+        <!-- Gesture Bar -->
+        <div class="pt-1.5 pb-0.5 flex justify-center">
+          <div class="w-24 h-1 rounded-full bg-[var(--border)]"></div>
+        </div>
+
+        <div id="phone-toast" class="pointer-events-none opacity-0 transition-opacity duration-200 absolute bottom-16 left-1/2 -translate-x-1/2 px-3 py-1 rounded text-xs font-bold mono shadow-lg z-50 whitespace-nowrap bg-amber-400 text-slate-950 border border-black"></div>
+      </div>
+    </div>
+
+    <!-- Right: Saved Corvix Skin Package Details & State Bindings -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-4">
+        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-[var(--border)] pb-3">
+          <div>
+            <div class="text-xs font-bold text-[var(--primary)] mono">CORVIX SKIN PACKAGE // AppSkin.WINAMP_CLASSIC</div>
+            <h2 class="text-lg font-bold mt-0.5">1:1 Pixel-Matched Winamp Classic (Main + EQ + Playlist)</h2>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--background)] mono">Ready to Implement</span>
+        </div>
+
+        <p class="text-sm text-[var(--muted-foreground)] leading-relaxed">
+          This interactive preview matches your reference screenshot element-for-element—gold double-line titlebars, dotted-grid <span class="mono">#000000</span> LCD with crisp green 7-segment clock and 19-band peak spectrum, <span class="mono">O A I D V</span> clutterbar, orange Volume + green Balance sliders, gold seek shuttle, light-silver <span class="mono">CBUTTONS</span>, <span class="mono">70–16K</span> EQ troughs with yellow spline grid, and <span class="mono">#00E800 / #FFFFFF</span> playlist with <span class="mono">ADD REM SEL MISC [0:00/27:45] LIST OPTS</span> footer.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 space-y-1.5">
+            <div class="font-bold">Saved Files in Corvix</div>
+            <div class="text-[var(--muted-foreground)] mono">E:\AI Creation\Corvix\skins\winamp_classic\</div>
+            <ul class="text-[var(--muted-foreground)] space-y-1 pt-1">
+              <li>• <span class="mono text-[var(--foreground)]">skin_manifest.json</span> — Exact hex palette, 275px grid &amp; Corvix bindings</li>
+              <li>• <span class="mono text-[var(--foreground)]">reference_screenshot.png</span> — Target 1:1 visual reference</li>
+              <li>• <span class="mono text-[var(--foreground)]">preview.html</span> — Self-contained interactive replica</li>
+              <li>• <span class="mono text-[var(--foreground)]">README.md</span> — Integration plan for Corvix</li>
+            </ul>
+          </div>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-3 space-y-1.5">
+            <div class="font-bold">Corvix State Mapping (Unmodified Until Requested)</div>
+            <ul class="text-[var(--muted-foreground)] space-y-1 pt-1">
+              <li>• <span class="mono text-[var(--foreground)]">CorvixUiState.currentTrack</span> → Ticker, kbps, kHz &amp; white row</li>
+              <li>• <span class="mono text-[var(--foreground)]">CorvixViewModel.elapsedSecFlow</span> → 7-segment timer &amp; shuttle</li>
+              <li>• <span class="mono text-[var(--foreground)]">CorvixUiState.eqBandsDb</span> → 70Hz–16kHz yellow-green faders</li>
+              <li>• <span class="mono text-[var(--foreground)]">CorvixUiState.tracks</span> → #00E800 playlist + total duration</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Status -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Live Interactive Skin State</h3>
+          <span class="text-xs mono font-bold" id="engine-state-badge">PLAYING</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
+            <div class="text-[var(--muted-foreground)]">Playing Track</div>
+            <div class="font-semibold truncate mt-0.5" id="telemetry-track">—</div>
+          </div>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
+            <div class="text-[var(--muted-foreground)]">Audio Specs</div>
+            <div class="font-semibold mono mt-0.5" id="telemetry-codec">—</div>
+          </div>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
+            <div class="text-[var(--muted-foreground)]">EQ / Modules</div>
+            <div class="font-semibold mono mt-0.5" id="telemetry-eq">—</div>
+          </div>
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5">
+            <div class="text-[var(--muted-foreground)]">Mode</div>
+            <div class="font-semibold mono mt-0.5" id="telemetry-mode">CLASSIC 1:1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    (function () {
+      // Exact playlist matching reference screenshot
+      const tracks = [
+        { title: "Go-Getters", artist: "Mori Calliope", duration: 195, kbps: "128", khz: "44" },
+        { title: "Goodbye", artist: "CircusP", duration: 204, kbps: "320", khz: "44" },
+        { title: "Siren", artist: "AmaLee", duration: 242, kbps: "256", khz: "48" },
+        { title: "Echo", artist: "Crusher-P", duration: 230, kbps: "128", khz: "48" },
+        { title: "Midnight City", artist: "M83", duration: 243, kbps: "320", khz: "44" },
+        { title: "Please Wait", artist: "Sunnexo", duration: 255, kbps: "192", khz: "44" },
+        { title: "Persona", artist: "Omaru Polka", duration: 296, kbps: "256", khz: "48" }
+      ];
+
+      // Exact Winamp 2.x EQ bands from screenshot
+      const eqBands = ["70", "180", "320", "600", "1K", "3K", "6K", "12K", "14K", "16K"];
+      const eqPresets = {
+        Flat:   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        Rock:   [5, 3, -2, -4, -1, 2, 4, 6, 6, 5],
+        Techno: [6, 5, 1, -2, -3, 1, 4, 6, 6, 5],
+        Vocal:  [-2, -1, 1, 4, 5, 4, 2, 0, 0, -1]
+      };
+
+      const state = {
+        mode: "classic", // 'classic' | 'wireframe'
+        showDp: false,
+        showPins: false,
+        playing: true,
+        stopped: false,
+        trackIdx: 3, // 4. Crusher-P - Echo
+        elapsed: 111, // 01:51
+        remainingMode: false,
+        visMode: "bars",
+        volume: 65,
+        balance: 50,
+        shuffle: true,
+        repeat: true,
+        mainShade: false,
+        eqOpen: true,
+        eqShade: false,
+        plOpen: true,
+        plShade: false,
+        eqOn: true,
+        eqAuto: true,
+        eqPreset: "Flat",
+        preamp: 0,
+        eqValues: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        playlist: [0, 1, 2, 3, 4, 5, 6]
+      };
+
+      // Thin crisp neon-green 7-segment digits matching screenshot
+      const segMap = {
+        "0": [1,1,1,1,1,1,0],
+        "1": [0,1,1,0,0,0,0],
+        "2": [1,1,0,1,1,0,1],
+        "3": [1,1,1,1,0,0,1],
+        "4": [0,1,1,0,0,1,1],
+        "5": [1,0,1,1,0,1,1],
+        "6": [1,0,1,1,1,1,1],
+        "7": [1,1,1,0,0,0,0],
+        "8": [1,1,1,1,1,1,1],
+        "9": [1,1,1,1,0,1,1],
+        "-": [0,0,0,0,0,0,1]
+      };
+
+      function renderDigit(ch, col) {
+        const s = segMap[ch] || [0,0,0,0,0,0,0];
+        const segs = [
+          `<line x1="2.5" y1="1.5" x2="10.5" y2="1.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="11" y1="2.5" x2="11" y2="10.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="11" y1="12.5" x2="11" y2="20.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="2.5" y1="21.5" x2="10.5" y2="21.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="2" y1="12.5" x2="2" y2="20.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="2" y1="2.5" x2="2" y2="10.5" stroke="${col}" stroke-width="1.7" stroke-linecap="round"/>`,
+          `<line x1="2.8" y1="11.5" x2="10.2" y2="11.5" stroke="${col}" stroke-width="1.6" stroke-linecap="round"/>`
+        ];
+        return `<svg width="13" height="23" viewBox="0 0 13 23" class="inline-block">${segs.filter((_, i) => s[i]).join("")}</svg>`;
+      }
+
+      function renderClock(str) {
+        const col = state.mode === "wireframe" ? "currentColor" : "#00ff00";
+        return str.split("").map(c => c === ":"
+          ? `<svg width="5" height="23" viewBox="0 0 5 23" class="inline-block"><rect x="1.5" y="6" width="2" height="2.4" fill="${col}"/><rect x="1.5" y="14.5" width="2" height="2.4" fill="${col}"/></svg>`
+          : renderDigit(c, col)
+        ).join("");
+      }
+
+      const glyphs = {
+        prev: `<svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><rect x="1" y="1" width="2" height="10"/><polygon points="8,6 3.5,1.5 3.5,10.5"/><polygon points="13,6 8.5,1.5 8.5,10.5"/></svg>`,
+        play: `<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1.2 10.5,6 2,10.8"/></svg>`,
+        pause: `<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1.5" width="3" height="9"/><rect x="7" y="1.5" width="3" height="9"/></svg>`,
+        stop: `<svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="2" width="8" height="8"/></svg>`,
+        next: `<svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><polygon points="1,1.5 5.5,6 1,10.5"/><polygon points="6,1.5 10.5,6 6,10.5"/><rect x="11" y="1" width="2" height="10"/></svg>`,
+        eject: `<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><polygon points="6,1.5 11,6.5 1,6.5"/><rect x="1" y="8.5" width="10" height="2"/></svg>`,
+        repeat: `<svg width="12" height="10" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5V3.5A1.5 1.5 0 0 1 3.5 2H11l-1.5-1.5M12 7v1.5A1.5 1.5 0 0 1 10.5 10H3l1.5 1.5"/></svg>`
+      };
+
+      function fmt2(sec) {
+        const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+      }
+      function fmt1(sec) {
+        const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+        return `${m}:${String(s).padStart(2, "0")}`;
+      }
+      function curTrack() { return tracks[state.trackIdx] || tracks[0]; }
+      function pin(n) {
+        return state.showPins ? `<span class="inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold bg-amber-400 text-slate-950 ring-1 ring-black ml-1">${n}</span>` : "";
+      }
+      function showToast(msg) {
+        const el = document.getElementById("phone-toast");
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.remove("opacity-0");
+        el.classList.add("opacity-100");
+        setTimeout(() => { el.classList.remove("opacity-100"); el.classList.add("opacity-0"); }, 1500);
+      }
+
+      function renderTitlebar(title, shadeAct, minBtn, closeAct) {
+        const wf = state.mode === "wireframe";
+        return `
+          <div class="${wf ? "bg-[var(--card)] border-b border-[var(--border)] text-[var(--foreground)]" : "wa-titlebar text-white"} h-[18px] px-1.5 flex items-center gap-1.5 select-none shrink-0" data-dp="Titlebar">
+            <span class="${wf ? "" : "text-[#d8b95b]"} text-[9px] leading-none">⏷</span>
+            <div class="flex-1 ${wf ? "border-t border-dashed border-[var(--border)]" : "wa-gold-bars"}"></div>
+            <span class="text-[9px] font-extrabold tracking-widest mono leading-none">${title}</span>
+            <div class="flex-1 ${wf ? "border-t border-dashed border-[var(--border)]" : "wa-gold-bars"}"></div>
+            <div class="flex items-center gap-[2px]">
+              ${shadeAct ? `<button data-action="${shadeAct}" class="w-3.5 h-3.5 text-[8px] font-bold flex items-center justify-center ${wf ? "border border-[var(--border)]" : "wa-mini-winbtn"}">_</button>` : ""}
+              ${minBtn ? `<button data-action="${minBtn}" class="w-3.5 h-3.5 text-[8px] font-bold flex items-center justify-center ${wf ? "border border-[var(--border)]" : "wa-mini-winbtn"}">□</button>` : ""}
+              ${closeAct ? `<button data-action="${closeAct}" class="w-3.5 h-3.5 text-[8px] font-bold flex items-center justify-center ${wf ? "border border-[var(--border)]" : "wa-mini-winbtn"}">×</button>` : ""}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderMainWindow() {
+        const wf = state.mode === "wireframe";
+        const tr = curTrack();
+        const winCls = wf ? "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)]" : "wa-window";
+        const lcdCls = wf ? "bg-[var(--background)] border border-dashed border-[var(--border)]" : "wa-lcd-dots";
+        const boxCls = wf ? "bg-[var(--background)] border border-[var(--border)]" : "wa-black-inset";
+        const btnCls = wf ? "bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]" : "wa-silver-btn";
+        const clockStr = state.stopped ? "00:00" : (state.remainingMode ? `-${fmt2(Math.max(0, tr.duration - state.elapsed))}` : fmt2(state.elapsed));
+
+        if (state.mainShade) {
+          return `
+            <div class="${winCls} shrink-0">
+              ${renderTitlebar("WINAMP", "toggleMainShade", null, null)}
+              <div class="p-1.5 flex items-center gap-1.5">
+                <div class="${boxCls} flex-1 px-2 py-0.5 flex items-center justify-between text-[11px] mono ${wf ? "" : "text-[#00e800]"}">
+                  <span class="truncate">${state.trackIdx + 1}. ${tr.artist} - ${tr.title}</span>
+                  <span>${clockStr}</span>
+                </div>
+                <button data-action="prev" class="w-7 h-6 flex items-center justify-center ${btnCls}">${glyphs.prev}</button>
+                <button data-action="play" class="w-7 h-6 flex items-center justify-center ${btnCls}">${glyphs.play}</button>
+                <button data-action="stop" class="w-7 h-6 flex items-center justify-center ${btnCls}">${glyphs.stop}</button>
+                <button data-action="next" class="w-7 h-6 flex items-center justify-center ${btnCls}">${glyphs.next}</button>
+              </div>
+            </div>
+          `;
+        }
+
+        const pct = tr.duration > 0 ? Math.min(100, Math.round((state.elapsed / tr.duration) * 100)) : 0;
+        const balDist = Math.abs(state.balance - 50) * 2;
+
+        return `
+          <div class="${winCls} shrink-0">
+            ${renderTitlebar("WINAMP", "toggleMainShade", "plToastMsg", "plToastMsg")}
+            <div class="p-2 space-y-1.5">
+              <!-- Top Half: Left LCD + Right Ticker/Specs/Volume/Balance/EQ/PL -->
+              <div class="flex gap-2 items-stretch">
+                <!-- Left Black Dotted LCD -->
+                <div class="${lcdCls} w-[132px] shrink-0 p-1.5 flex gap-1" data-dp="LCD">
+                  <!-- O A I D V Clutterbar -->
+                  <div class="flex flex-col justify-between text-[7px] leading-none mono font-bold ${wf ? "text-[var(--muted-foreground)]" : "text-[#8e95ad]"} select-none py-0.5">
+                    <button data-action="plToast" data-msg="O: Corvix Skin Options" class="hover:text-amber-400">O</button>
+                    <button data-action="plToast" data-msg="A: Always On Top" class="hover:text-amber-400">A</button>
+                    <button data-action="plToast" data-msg="I: ${tr.kbps}kbps / ${tr.khz}kHz" class="hover:text-amber-400">I</button>
+                    <button data-action="toggleMainShade" class="hover:text-amber-400">D</button>
+                    <button data-action="cycleVis" class="hover:text-amber-400">V</button>
+                  </div>
+                  <!-- Clock + Spectrum -->
+                  <div class="flex-1 flex flex-col justify-between">
+                    <div class="flex items-center justify-between pt-0.5">
+                      <div class="flex items-center gap-0.5">
+                        <span class="w-1.5 h-1.5 inline-block ${state.playing && !state.stopped ? "bg-[#00ff00]" : "bg-[#cc2200]"}"></span>
+                        <span class="text-[10px] leading-none ${wf ? "" : "text-[#00ff00]"}">${state.stopped ? "■" : state.playing ? "▶" : "❚❚"}</span>
+                      </div>
+                      <button data-action="toggleTimerMode" class="lcd-clock flex items-center gap-0.5 cursor-pointer" title="Toggle Remaining Time">${renderClock(clockStr)}</button>
+                    </div>
+                    <div data-action="cycleVis" class="mt-1 cursor-pointer">
+                      <canvas width="108" height="32" class="lcd-vis-canvas w-full h-8 block"></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Controls Stack -->
+                <div class="flex-1 min-w-0 flex flex-col justify-between gap-1.5">
+                  <!-- Green Track Marquee Box -->
+                  <div class="${boxCls} px-1.5 py-0.5 overflow-hidden" data-dp="Ticker">
+                    <div class="text-[11px] mono truncate ${wf ? "" : "text-[#00e800]"}">
+                      ${state.trackIdx + 1}. ${tr.artist} - ${tr.title} (${fmt1(tr.duration)})
+                    </div>
+                  </div>
+
+                  <!-- 128 kbps | 48 kHz | mono stereo -->
+                  <div class="flex items-center justify-between text-[9px] mono">
+                    <div class="flex items-center gap-1">
+                      <span class="${boxCls} px-1 ${wf ? "" : "text-[#00e800]"}">${tr.kbps}</span>
+                      <span class="${wf ? "text-[var(--muted-foreground)]" : "text-[#a4abc2]"}">kbps</span>
+                      <span class="${boxCls} px-1 ${wf ? "" : "text-[#00e800]"}">${tr.khz}</span>
+                      <span class="${wf ? "text-[var(--muted-foreground)]" : "text-[#a4abc2]"}">kHz</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                      <span class="${wf ? "text-[var(--muted-foreground)]" : "text-[#636980]"}">mono</span>
+                      <span class="${wf ? "" : "text-[#00ff00]"}">stereo</span>
+                    </div>
+                  </div>
+
+                  <!-- Volume + Balance + EQ + PL -->
+                  <div class="flex items-center gap-1.5">
+                    <!-- Orange Volume Slider -->
+                    <div class="wa-hslider-wrap flex-[1.4]" data-dp="Vol">
+                      <div class="wa-hslider-track" style="background: ${wf ? "var(--background)" : `linear-gradient(90deg, #de7814 0%, #f29b2e ${state.volume}%, #11131b ${state.volume}%)`};"></div>
+                      <input id="vol-range" type="range" min="0" max="100" value="${state.volume}" class="wa-hslider-input" />
+                    </div>
+                    <!-- Green Balance Slider -->
+                    <div class="wa-hslider-wrap flex-1" data-dp="Bal">
+                      <div class="wa-hslider-track" style="background: ${wf ? "var(--background)" : `linear-gradient(90deg, #11131b 0%, #00c800 ${100 - balDist}%, #11131b 100%)`};"></div>
+                      <input id="bal-range" type="range" min="0" max="100" value="${state.balance}" class="wa-hslider-input" />
+                    </div>
+                    <!-- EQ / PL Bevel Buttons -->
+                    <button data-action="toggleEqModule" class="h-5 px-1.5 text-[8px] mono font-bold flex items-center gap-0.5 ${btnCls}" data-dp="EQ">
+                      <span class="text-[7px] ${state.eqOpen ? "text-[#00c800]" : "text-slate-500"}">▶</span>EQ
+                    </button>
+                    <button data-action="togglePlModule" class="h-5 px-1.5 text-[8px] mono font-bold flex items-center gap-0.5 ${btnCls}" data-dp="PL">
+                      <span class="text-[7px] ${state.plOpen ? "text-[#00c800]" : "text-slate-500"}">▶</span>PL
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Full-Width Recessed Seek Shuttle -->
+              <div class="${wf ? "border border-[var(--border)] bg-[var(--background)]" : "wa-seek-groove"} px-0.5 flex items-center h-[16px]" data-dp="Seek">
+                <input id="seek-range" type="range" min="0" max="${tr.duration}" value="${state.elapsed}" class="wa-seek-range" />
+              </div>
+
+              <!-- Bottom Transport Keys + Shuffle/Repeat + Winamp Lightning -->
+              <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                <div class="flex items-center gap-[2px]">
+                  <button data-action="prev" class="w-8 h-7 flex items-center justify-center ${btnCls}" data-dp="48dp">${glyphs.prev}</button>
+                  <button data-action="play" class="w-8 h-7 flex items-center justify-center ${btnCls}" data-dp="48dp">${glyphs.play}</button>
+                  <button data-action="pause" class="w-8 h-7 flex items-center justify-center ${btnCls}" data-dp="48dp">${glyphs.pause}</button>
+                  <button data-action="stop" class="w-8 h-7 flex items-center justify-center ${btnCls}" data-dp="48dp">${glyphs.stop}</button>
+                  <button data-action="next" class="w-8 h-7 flex items-center justify-center ${btnCls}" data-dp="48dp">${glyphs.next}</button>
+                  <button data-action="plToast" data-msg="Eject: Opens Corvix Folder Picker" class="w-7 h-7 ml-1.5 flex items-center justify-center ${btnCls}" data-dp="Eject">${glyphs.eject}</button>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button data-action="toggleShuffle" class="h-6 px-1.5 text-[8px] mono font-bold flex items-center gap-1 ${btnCls}" data-dp="SHUF">
+                    <span class="text-[7px] ${state.shuffle ? "text-[#00c800]" : "text-slate-500"}">▶</span>SHUFFLE
+                  </button>
+                  <button data-action="toggleRepeat" class="h-6 px-1.5 text-[8px] font-bold flex items-center gap-0.5 ${btnCls}" data-dp="REP">
+                    <span class="text-[7px] ${state.repeat ? "text-[#00c800]" : "text-slate-500"}">▶</span>${glyphs.repeat}
+                  </button>
+                  <!-- Classic Silver/Gold Winamp Bolt Emblem -->
+                  <div class="ml-1 w-5 h-5 flex items-center justify-center" title="Winamp Classic">
+                    <svg width="17" height="17" viewBox="0 0 24 24">
+                      <polygon points="13,1 3,14 10,14 8,23 21,10 14,10" fill="#d8b95b" stroke="#8592ad" stroke-width="1.5"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderEqWindow() {
+        if (!state.eqOpen) return "";
+        const wf = state.mode === "wireframe";
+        const winCls = wf ? "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)]" : "wa-window";
+        const btnCls = wf ? "bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]" : "wa-silver-btn";
+
+        if (state.eqShade) {
+          return `<div class="${winCls} shrink-0">${renderTitlebar("WINAMP EQUALIZER", "toggleEqShade", null, "toggleEqModule")}</div>`;
+        }
+
+        return `
+          <div class="${winCls} shrink-0" data-dp="EQ Window">
+            ${renderTitlebar("WINAMP EQUALIZER", "toggleEqShade", null, "toggleEqModule")}
+            <div class="p-2 space-y-1.5">
+              <!-- Top Bar: ON, AUTO, Blue-Slate Grid + Yellow Curve, PRESETS -->
+              <div class="flex items-center gap-1.5">
+                <button data-action="toggleEqOn" class="h-6 px-1.5 text-[8px] mono font-bold flex items-center gap-0.5 ${btnCls}">
+                  <span class="text-[7px] ${state.eqOn ? "text-[#00c800]" : "text-slate-500"}">▶</span>ON
+                </button>
+                <button data-action="toggleEqAuto" class="h-6 px-1.5 text-[8px] mono font-bold flex items-center gap-0.5 ${btnCls}">
+                  <span class="text-[7px] ${state.eqAuto ? "text-[#00c800]" : "text-slate-500"}">▶</span>AUTO
+                </button>
+                <div class="flex-1 h-7 ${wf ? "border border-[var(--border)] bg-[var(--background)]" : "bg-[#25293e] border border-[#0b0d14]"} p-0.5">
+                  <canvas width="150" height="24" class="eq-curve-canvas w-full h-full block"></canvas>
+                </div>
+                <button data-action="cycleEqPreset" class="h-6 px-2 text-[8px] mono font-bold ${btnCls}">PRESETS</button>
+              </div>
+
+              <!-- Preamp + 10 Bands (70 .. 16K) -->
+              <div class="flex items-stretch gap-1 pt-0.5">
+                <!-- Preamp Column + +12db / 0db / -12db Scale -->
+                <div class="flex items-center gap-1 pr-1">
+                  <div class="flex flex-col items-center">
+                    <div class="flex items-center">
+                      <div class="flex flex-col justify-between h-[74px] text-[7px] mono text-right pr-0.5 ${wf ? "text-[var(--muted-foreground)]" : "text-[#9097b0]"}">
+                        <span>—</span><span>—</span><span>—</span>
+                      </div>
+                      <div class="wa-eq-col">
+                        <div class="wa-eq-trough ${wf ? "wa-eq-trough-wf" : ""}"></div>
+                        <input type="range" min="-12" max="12" value="${state.preamp}" data-preamp="true" class="wa-eq-range" />
+                      </div>
+                      <div class="flex flex-col justify-between h-[74px] text-[8px] mono font-bold pl-0.5 ${wf ? "" : "text-[#e0b030]"}">
+                        <span>+12 db</span><span>• 0 db</span><span>-12 db</span>
+                      </div>
+                    </div>
+                    <span class="text-[8px] mono tracking-tight ${wf ? "text-[var(--muted-foreground)]" : "text-[#d5dbea]"}">PREAMP</span>
+                  </div>
+                </div>
+
+                <!-- 10 Frequency Faders -->
+                <div class="flex-1 grid grid-cols-10 gap-0.5 text-center">
+                  ${eqBands.map((lbl, i) => `
+                    <div class="flex flex-col items-center">
+                      <div class="wa-eq-col">
+                        <div class="wa-eq-trough ${wf ? "wa-eq-trough-wf" : ""}"></div>
+                        <input type="range" min="-12" max="12" value="${state.eqValues[i]}" data-eq-band="${i}" class="wa-eq-range" />
+                      </div>
+                      <span class="text-[8px] mono ${wf ? "text-[var(--muted-foreground)]" : "text-[#d5dbea]"}">${lbl}</span>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderPlWindow() {
+        if (!state.plOpen) return "";
+        const wf = state.mode === "wireframe";
+        const winCls = wf ? "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)]" : "wa-window";
+        const btnCls = wf ? "bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]" : "wa-silver-btn";
+        const totalSec = state.playlist.reduce((a, idx) => a + tracks[idx].duration, 0);
+
+        if (state.plShade) {
+          return `<div class="${winCls} shrink-0">${renderTitlebar("WINAMP PLAYLIST", "togglePlShade", null, "togglePlModule")}</div>`;
+        }
+
+        return `
+          <div class="${winCls} flex-1 min-h-0 flex flex-col" data-dp="Playlist Window">
+            ${renderTitlebar("WINAMP PLAYLIST", "togglePlShade", "plToastMsg", "togglePlModule")}
+
+            <div class="flex-1 min-h-0 p-2 flex flex-col gap-2">
+              <!-- Pure Black #000000 Track Terminal with Right Scrollbar -->
+              <div class="flex-1 min-h-0 ${wf ? "bg-[var(--background)] border border-[var(--border)]" : "wa-black-inset"} wa-scroll overflow-y-auto p-1.5 space-y-0.5">
+                ${state.playlist.map((idx, pos) => {
+                  const t = tracks[idx];
+                  const isAct = idx === state.trackIdx;
+                  const txtCls = wf
+                    ? (isAct ? "bg-[var(--foreground)] text-[var(--background)] font-bold" : "text-[var(--foreground)]")
+                    : (isAct ? "text-[#ffffff] font-semibold" : "text-[#00e800]");
+                  return `
+                    <button data-play-track="${idx}" class="w-full px-1 py-0.5 flex items-center justify-between text-left text-[12px] leading-snug mono ${txtCls} hover:bg-[#0000c0] hover:text-white" data-dp="Track Row">
+                      <span class="truncate">${pos + 1}. ${t.artist} - ${t.title}</span>
+                      <span class="shrink-0 ml-2 tabular-nums">${fmt1(t.duration)}</span>
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+
+              <!-- Bottom Toolbar: ADD REM SEL MISC + Dual LCD (0:00/27:45 & Mini Transport) + LIST OPTS -->
+              <div class="flex items-stretch justify-between gap-1 shrink-0">
+                <div class="flex items-center gap-1">
+                  <button data-action="plToast" data-msg="ADD: Corvix Library / Folder" class="h-9 px-1.5 text-[8px] mono font-bold ${btnCls}">ADD</button>
+                  <button data-action="plToast" data-msg="REM: Remove Selected Track" class="h-9 px-1.5 text-[8px] mono font-bold ${btnCls}">REM</button>
+                  <button data-action="plToast" data-msg="SEL: Select All / Invert" class="h-9 px-1.5 text-[8px] mono font-bold ${btnCls}">SEL</button>
+                  <button data-action="sortPlaylist" class="h-9 px-1.5 text-[8px] mono font-bold ${btnCls}">MISC</button>
+                </div>
+
+                <!-- Dual Black Telemetry LCD -->
+                <div class="flex-1 ${wf ? "border border-[var(--border)] bg-[var(--background)]" : "wa-black-inset"} px-1.5 py-0.5 flex flex-col justify-between">
+                  <div class="text-[9px] mono leading-tight ${wf ? "" : "text-[#00e800]"} tabular-nums">${fmt1(state.elapsed)}/${fmt1(totalSec)}</div>
+                  <div class="flex items-center justify-between text-[8px] mono">
+                    <div class="flex items-center gap-1 ${wf ? "text-[var(--muted-foreground)]" : "text-[#d8b95b]"}">
+                      <button data-action="prev">⏮</button>
+                      <button data-action="play">▶</button>
+                      <button data-action="pause">❚❚</button>
+                      <button data-action="stop">■</button>
+                      <button data-action="next">⏭</button>
+                    </div>
+                    <span class="${wf ? "" : "text-[#00e800]"} tabular-nums">${fmt2(state.elapsed)}</span>
+                  </div>
+                </div>
+
+                <button data-action="plToast" data-msg="LIST OPTS: Corvix Playlists (.m3u8)" class="h-9 px-1.5 text-[7px] leading-tight mono font-bold ${btnCls}">LIST<br/>OPTS</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderPhone() {
+        const canvas = document.getElementById("phone-canvas");
+        const shell = document.getElementById("phone-shell");
+        if (!canvas || !shell) return;
+        shell.classList.toggle("touch-overlay-active", state.showDp);
+
+        canvas.className = `relative flex-1 rounded-[14px] overflow-hidden flex flex-col border border-[var(--border)] ${state.mode === "wireframe" ? "bg-[var(--background)]" : "bg-[#090b12]"}`;
+        canvas.innerHTML = `${renderMainWindow()}${renderEqWindow()}${renderPlWindow()}`;
+
+        const seek = document.getElementById("seek-range");
+        if (seek) seek.addEventListener("input", (e) => { state.elapsed = Number(e.target.value); state.stopped = false; renderPhone(); });
+        const vol = document.getElementById("vol-range");
+        if (vol) vol.addEventListener("input", (e) => { state.volume = Number(e.target.value); renderPhone(); });
+        const bal = document.getElementById("bal-range");
+        if (bal) bal.addEventListener("input", (e) => { state.balance = Number(e.target.value); renderPhone(); });
+
+        document.querySelectorAll("[data-eq-band]").forEach(el => {
+          el.addEventListener("input", (e) => {
+            state.eqValues[Number(e.target.dataset.eqBand)] = Number(e.target.value);
+            state.eqPreset = "Custom";
+            drawEqCurve();
+          });
+        });
+        const pre = document.querySelector("[data-preamp]");
+        if (pre) pre.addEventListener("input", (e) => { state.preamp = Number(e.target.value); drawEqCurve(); });
+
+        drawEqCurve();
+        updateTelemetry();
+        updateHeaderBtns();
+      }
+
+      function updateTelemetry() {
+        const tr = curTrack();
+        document.getElementById("engine-state-badge").textContent = state.stopped ? "STOPPED" : state.playing ? "PLAYING" : "PAUSED";
+        document.getElementById("telemetry-track").textContent = `${state.trackIdx + 1}. ${tr.artist} - ${tr.title}`;
+        document.getElementById("telemetry-codec").textContent = `${tr.kbps} kbps · ${tr.khz} kHz`;
+        document.getElementById("telemetry-eq").textContent = `EQ:${state.eqOpen ? "ON" : "OFF"} · PL:${state.plOpen ? "ON" : "OFF"}`;
+        document.getElementById("telemetry-mode").textContent = state.mode === "wireframe" ? "BLUEPRINT" : "CLASSIC 1:1";
+      }
+
+      function updateHeaderBtns() {
+        document.querySelectorAll(".mode-btn").forEach(b => {
+          const act = b.dataset.mode === state.mode;
+          b.className = `mode-btn px-3 py-1 rounded text-xs font-semibold ${act ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--muted-foreground)]"}`;
+        });
+        document.getElementById("toggle-dp").className = `px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${state.showDp ? "bg-emerald-500 text-slate-950 border-emerald-500" : "border-[var(--border)]"}`;
+        document.getElementById("toggle-pins").className = `px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${state.showPins ? "bg-amber-400 text-slate-950 border-amber-400" : "border-[var(--border)]"}`;
+      }
+
+      // Canvases
+      const bars = new Array(19).fill(0.35);
+      const peaks = new Array(19).fill(0.45);
+      let tick = 0;
+
+      function getCssVar(name, fb) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb;
+      }
+
+      function drawEqCurve() {
+        document.querySelectorAll(".eq-curve-canvas").forEach(c => {
+          const ctx = c.getContext("2d");
+          const w = c.width, h = c.height;
+          ctx.clearRect(0, 0, w, h);
+          const wf = state.mode === "wireframe";
+
+          // Subtle Winamp EQ grid lines
+          ctx.strokeStyle = wf ? getCssVar("--border", "#334155") : "#414866";
+          ctx.lineWidth = 0.7;
+          for (let x = 14; x < w; x += 14) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+          }
+          ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+
+          // Crisp #FFE600 yellow spline line
+          ctx.strokeStyle = wf ? getCssVar("--foreground", "#e2e8f0") : (state.eqOn ? "#ffe600" : "#6b7280");
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          state.eqValues.forEach((v, i) => {
+            const x = 6 + (i / (state.eqValues.length - 1)) * (w - 12);
+            const y = h / 2 - ((state.eqOn ? v : 0) / 14) * (h * 0.42);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        });
+      }
+
+      function drawSpectrum() {
+        tick += 0.09;
+        const active = state.playing && !state.stopped;
+        const n = 19;
+        for (let i = 0; i < n; i++) {
+          const tgt = active ? Math.max(0.08, Math.min(0.95, 0.42 + 0.36 * Math.sin(tick * 2.2 + i * 0.68) + 0.2 * Math.cos(tick * 3.8 - i * 0.85))) : 0.03;
+          bars[i] = bars[i] * 0.65 + tgt * 0.35;
+          if (bars[i] > peaks[i]) peaks[i] = bars[i];
+          else peaks[i] = Math.max(0.05, peaks[i] - 0.012);
+        }
+
+        document.querySelectorAll(".lcd-vis-canvas").forEach(c => {
+          const ctx = c.getContext("2d");
+          const w = c.width, h = c.height;
+          ctx.clearRect(0, 0, w, h);
+          const wf = state.mode === "wireframe";
+          if (state.visMode === "osc") {
+            ctx.strokeStyle = wf ? getCssVar("--foreground", "#e2e8f0") : "#00ff00";
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            for (let x = 0; x < w; x += 2) {
+              const y = h / 2 + (active ? Math.sin(x * 0.12 + tick * 3) * (h * 0.32) : 0);
+              if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          } else {
+            const bw = 4.5, gap = 1.1;
+            const segH = 2, segGap = 1;
+            const maxSegs = Math.floor(h / (segH + segGap));
+            for (let i = 0; i < n; i++) {
+              const lit = Math.round(bars[i] * maxSegs);
+              const x = 1 + i * (bw + gap);
+              for (let s = 0; s < lit; s++) {
+                const y = h - (s + 1) * (segH + segGap);
+                const r = s / maxSegs;
+                ctx.fillStyle = wf ? getCssVar("--muted-foreground", "#94a3b8") : (r > 0.78 ? "#ff3300" : r > 0.52 ? "#ffd000" : r > 0.3 ? "#a8ff00" : "#00ff00");
+                ctx.fillRect(x, y, bw, segH);
+              }
+              const pSeg = Math.min(maxSegs - 1, Math.round(peaks[i] * maxSegs));
+              ctx.fillStyle = wf ? getCssVar("--foreground", "#ffffff") : "#8b93a8";
+              ctx.fillRect(x, h - (pSeg + 1) * (segH + segGap), bw, 1.5);
+            }
+          }
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        const mb = e.target.closest("[data-mode]");
+        if (mb) { state.mode = mb.dataset.mode; renderPhone(); return; }
+
+        const act = e.target.closest("[data-action]");
+        if (act) {
+          const a = act.dataset.action;
+          if (a === "play") { state.stopped = false; state.playing = true; }
+          else if (a === "pause") { if (!state.stopped) state.playing = !state.playing; }
+          else if (a === "stop") { state.stopped = true; state.playing = false; state.elapsed = 0; }
+          else if (a === "next") { state.trackIdx = (state.trackIdx + 1) % tracks.length; state.elapsed = 0; state.stopped = false; state.playing = true; }
+          else if (a === "prev") { state.trackIdx = (state.trackIdx - 1 + tracks.length) % tracks.length; state.elapsed = 0; state.stopped = false; state.playing = true; }
+          else if (a === "toggleTimerMode") { state.remainingMode = !state.remainingMode; }
+          else if (a === "cycleVis") { state.visMode = state.visMode === "bars" ? "osc" : "bars"; }
+          else if (a === "toggleShuffle") { state.shuffle = !state.shuffle; }
+          else if (a === "toggleRepeat") { state.repeat = !state.repeat; }
+          else if (a === "toggleMainShade") { state.mainShade = !state.mainShade; }
+          else if (a === "toggleEqModule") { state.eqOpen = !state.eqOpen; }
+          else if (a === "toggleEqShade") { state.eqShade = !state.eqShade; }
+          else if (a === "togglePlModule") { state.plOpen = !state.plOpen; }
+          else if (a === "togglePlShade") { state.plShade = !state.plShade; }
+          else if (a === "toggleEqOn") { state.eqOn = !state.eqOn; }
+          else if (a === "toggleEqAuto") { state.eqAuto = !state.eqAuto; }
+          else if (a === "cycleEqPreset") {
+            const ks = Object.keys(eqPresets);
+            const nxt = ks[(ks.indexOf(state.eqPreset) + 1) % ks.length];
+            state.eqPreset = nxt;
+            state.eqValues = [...eqPresets[nxt]];
+            showToast(`Preset: ${nxt}`);
+          }
+          else if (a === "sortPlaylist") { state.playlist = [...state.playlist].reverse(); showToast("Playlist sorted"); }
+          else if (a === "plToast") { showToast(act.dataset.msg || "Winamp"); }
+          else if (a === "plToastMsg") { showToast("Winamp Window Action"); }
+          renderPhone();
+          return;
+        }
+
+        const pr = e.target.closest("[data-play-track]");
+        if (pr) {
+          state.trackIdx = Number(pr.dataset.playTrack);
+          state.elapsed = 0;
+          state.playing = true;
+          state.stopped = false;
+          renderPhone();
+        }
+      });
+
+      document.getElementById("toggle-dp").addEventListener("click", () => { state.showDp = !state.showDp; renderPhone(); });
+      document.getElementById("toggle-pins").addEventListener("click", () => { state.showPins = !state.showPins; renderPhone(); });
+      window.addEventListener("themechange", () => { drawEqCurve(); if (state.mode === "wireframe") renderPhone(); });
+
+      setInterval(() => {
+        if (state.playing && !state.stopped) {
+          const tr = curTrack();
+          state.elapsed++;
+          if (state.elapsed >= tr.duration) {
+            state.trackIdx = (state.trackIdx + 1) % tracks.length;
+            state.elapsed = 0;
+            renderPhone();
+            return;
+          }
+          const seek = document.getElementById("seek-range");
+          if (seek && document.activeElement !== seek) seek.value = state.elapsed;
+          const clockStr = state.remainingMode ? `-${fmt2(Math.max(0, tr.duration - state.elapsed))}` : fmt2(state.elapsed);
+          document.querySelectorAll(".lcd-clock").forEach(el => {
+            if (state.mainShade) el.textContent = clockStr;
+            else el.innerHTML = renderClock(clockStr);
+          });
+        }
+      }, 1000);
+
+      function loop() { drawSpectrum(); requestAnimationFrame(loop); }
+      renderPhone();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

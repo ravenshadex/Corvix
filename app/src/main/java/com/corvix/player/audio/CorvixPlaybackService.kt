@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.media.AudioRecordingConfiguration
+import android.media.MediaRecorder
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
 import android.media.audiofx.PresetReverb
@@ -17,11 +18,20 @@ import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
+import androidx.media3.common.text.Cue
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -352,7 +362,12 @@ class CorvixPlaybackService : MediaSessionService() {
         if (am != null) {
             val recCb = object : AudioManager.AudioRecordingCallback() {
                 override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>?) {
-                    if (!configs.isNullOrEmpty() && (exo.isPlaying || exo.playWhenReady)) {
+                    val activeMicCapture = configs.orEmpty().any { cfg ->
+                        val silenced = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cfg.isClientSilenced
+                        val src = cfg.clientAudioSource
+                        !silenced && src != MediaRecorder.AudioSource.REMOTE_SUBMIX && src != 1999 // HOTWORD
+                    }
+                    if (activeMicCapture && (exo.isPlaying || exo.playWhenReady)) {
                         Log.i("CorvixPlaybackService", "External audio recording detected; pausing playback")
                         exo.pause()
                     }
@@ -420,15 +435,11 @@ class CorvixPlaybackService : MediaSessionService() {
 
             override fun addListener(listener: Player.Listener) {
                 val forwarding = this
-                val wrapper = object : Player.Listener by listener {
-                    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                        listener.onAvailableCommandsChanged(augmentedCommands(availableCommands))
-                    }
-
-                    override fun onEvents(player: Player, events: Player.Events) {
-                        listener.onEvents(forwarding, events)
-                    }
-                }
+                val wrapper = CommandAugmentingPlayerListener(
+                    delegate = listener,
+                    forwardingOwner = forwarding,
+                    augmentCommands = ::augmentedCommands
+                )
                 wrappedListeners[listener] = wrapper
                 super.addListener(wrapper)
             }
@@ -573,4 +584,135 @@ class CorvixPlaybackService : MediaSessionService() {
         player = null
         super.onDestroy()
     }
+}
+
+/**
+ * Explicit Player.Listener forwarder so every Java 8 default callback in Media3
+ * (onPlaybackStateChanged, onTimelineChanged, onIsPlayingChanged, etc.) reaches
+ * MediaSessionImpl reliably while augmenting availableCommands with Next/Prev.
+ */
+@OptIn(UnstableApi::class)
+private class CommandAugmentingPlayerListener(
+    private val delegate: Player.Listener,
+    private val forwardingOwner: Player,
+    private val augmentCommands: (Player.Commands) -> Player.Commands
+) : Player.Listener {
+
+    override fun onEvents(player: Player, events: Player.Events) =
+        delegate.onEvents(forwardingOwner, events)
+
+    override fun onTimelineChanged(timeline: Timeline, reason: Int) =
+        delegate.onTimelineChanged(timeline, reason)
+
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) =
+        delegate.onMediaItemTransition(mediaItem, reason)
+
+    override fun onTracksChanged(tracks: Tracks) =
+        delegate.onTracksChanged(tracks)
+
+    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) =
+        delegate.onMediaMetadataChanged(mediaMetadata)
+
+    override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) =
+        delegate.onPlaylistMetadataChanged(mediaMetadata)
+
+    override fun onIsLoadingChanged(isLoading: Boolean) =
+        delegate.onIsLoadingChanged(isLoading)
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onLoadingChanged(isLoading: Boolean) =
+        delegate.onLoadingChanged(isLoading)
+
+    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) =
+        delegate.onAvailableCommandsChanged(augmentCommands(availableCommands))
+
+    override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) =
+        delegate.onTrackSelectionParametersChanged(parameters)
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) =
+        delegate.onPlayerStateChanged(playWhenReady, playbackState)
+
+    override fun onPlaybackStateChanged(playbackState: Int) =
+        delegate.onPlaybackStateChanged(playbackState)
+
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) =
+        delegate.onPlayWhenReadyChanged(playWhenReady, reason)
+
+    override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) =
+        delegate.onPlaybackSuppressionReasonChanged(playbackSuppressionReason)
+
+    override fun onIsPlayingChanged(isPlaying: Boolean) =
+        delegate.onIsPlayingChanged(isPlaying)
+
+    override fun onRepeatModeChanged(repeatMode: Int) =
+        delegate.onRepeatModeChanged(repeatMode)
+
+    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) =
+        delegate.onShuffleModeEnabledChanged(shuffleModeEnabled)
+
+    override fun onPlayerError(error: PlaybackException) =
+        delegate.onPlayerError(error)
+
+    override fun onPlayerErrorChanged(error: PlaybackException?) =
+        delegate.onPlayerErrorChanged(error)
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onPositionDiscontinuity(reason: Int) =
+        delegate.onPositionDiscontinuity(reason)
+
+    override fun onPositionDiscontinuity(
+        oldPosition: Player.PositionInfo,
+        newPosition: Player.PositionInfo,
+        reason: Int
+    ) = delegate.onPositionDiscontinuity(oldPosition, newPosition, reason)
+
+    override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) =
+        delegate.onPlaybackParametersChanged(playbackParameters)
+
+    override fun onSeekBackIncrementChanged(seekBackIncrementMs: Long) =
+        delegate.onSeekBackIncrementChanged(seekBackIncrementMs)
+
+    override fun onSeekForwardIncrementChanged(seekForwardIncrementMs: Long) =
+        delegate.onSeekForwardIncrementChanged(seekForwardIncrementMs)
+
+    override fun onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs: Long) =
+        delegate.onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs)
+
+    override fun onAudioSessionIdChanged(audioSessionId: Int) =
+        delegate.onAudioSessionIdChanged(audioSessionId)
+
+    override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) =
+        delegate.onAudioAttributesChanged(audioAttributes)
+
+    override fun onVolumeChanged(volume: Float) =
+        delegate.onVolumeChanged(volume)
+
+    override fun onSkipSilenceEnabledChanged(skipSilenceEnabled: Boolean) =
+        delegate.onSkipSilenceEnabledChanged(skipSilenceEnabled)
+
+    override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) =
+        delegate.onDeviceInfoChanged(deviceInfo)
+
+    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) =
+        delegate.onDeviceVolumeChanged(volume, muted)
+
+    override fun onVideoSizeChanged(videoSize: VideoSize) =
+        delegate.onVideoSizeChanged(videoSize)
+
+    override fun onSurfaceSizeChanged(width: Int, height: Int) =
+        delegate.onSurfaceSizeChanged(width, height)
+
+    override fun onRenderedFirstFrame() =
+        delegate.onRenderedFirstFrame()
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onCues(cues: MutableList<Cue>) =
+        delegate.onCues(cues)
+
+    override fun onCues(cueGroup: CueGroup) =
+        delegate.onCues(cueGroup)
+
+    override fun onMetadata(metadata: Metadata) =
+        delegate.onMetadata(metadata)
 }

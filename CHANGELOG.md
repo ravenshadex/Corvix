@@ -1,5 +1,10 @@
 # Corvix Changelog
 
+## v1.0.3 (Build 4)
+### Hotfix
+- **Restored Media Notification Bar & Seek Bar Slider:** Replaced Kotlin interface delegation (`Player.Listener by listener`) in `CorvixPlaybackService` with an explicit `CommandAugmentingPlayerListener` forwarding all 37 `Player.Listener` callbacks (including `onTimelineChanged`, `onPlaybackStateChanged`, `onIsPlayingChanged`, `onMediaItemTransition`, `onPositionDiscontinuity`, and `onAvailableCommandsChanged`). Kotlin delegation over Java default interface methods previously dropped playback/timeline updates to `MediaSession` & `MediaController`, which hid the notification bar and blocked seeking while still advertising Next/Previous skip commands.
+- **Refined Recorder Pause Filter:** Excluded silenced clients, `REMOTE_SUBMIX`, and system `HOTWORD` sources in `AudioRecordingCallback` so background assistant listeners do not interrupt playback while active recorder apps still pause playback immediately.
+
 ## v1.0.2 (Build 3)
 ### Bug Fixes & Stability
 - **Pause automatically when turning on Recorder / Mic apps:** Added `AudioManager.AudioRecordingCallback` monitoring inside `CorvixPlaybackService` alongside Media3 audio focus handling so playback pauses immediately when a voice recorder or external mic capture starts.

@@ -21,6 +21,7 @@ import com.corvix.player.audio.ArtworkSearchRepository
 import com.corvix.player.audio.CorvixAudioController
 import com.corvix.player.audio.CorvixMediaCommand
 import com.corvix.player.audio.CorvixMediaCommandBus
+import com.corvix.player.audio.CorvixServiceQueue
 import com.corvix.player.audio.DeviceStorageInfo
 import com.corvix.player.audio.LocalLibraryScanner
 import com.corvix.player.audio.LyricsCandidate
@@ -300,6 +301,7 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
         scope = viewModelScope,
         onPlaybackStateChanged = { playing, _ ->
             _uiState.update { it.copy(isPlaying = playing) }
+            syncWidgetState()
         },
         onTrackCompleted = {
             if (_uiState.value.repeatMode == RepeatMode.ONE) {
@@ -308,6 +310,10 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
                 nextTrack()
             }
         },
+        onTrackError = {
+            showToast("Skipped unplayable track")
+            nextTrack()
+        },
         onHardwareOutputDetected = { detectedName ->
             val current = _uiState.value.activeSink
             if (detectedName != current.shortName) {
@@ -315,6 +321,17 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     )
+
+    private fun syncServiceQueue() {
+        val st = _uiState.value
+        CorvixServiceQueue.sync(
+            tracks = st.tracks,
+            currentIndex = st.currentTrackIndex,
+            isShuffle = st.isShuffle,
+            repeatMode = st.repeatMode,
+            nextUpIds = st.nextUpTrackIds
+        )
+    }
 
     private var customPlaylistSeq = 1
     private var tickerJob: Job? = null
@@ -382,16 +399,15 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
                 CorvixWidgetBridge.ACTION_SHUFFLE -> toggleShuffle()
             }
         }
+        syncServiceQueue()
         syncWidgetState()
-        viewModelScope.launch {
-            CorvixMediaCommandBus.commands.collect { cmd ->
-                when (cmd) {
-                    CorvixMediaCommand.TOGGLE_PLAY -> togglePlay()
-                    CorvixMediaCommand.PLAY -> if (!_uiState.value.isPlaying) togglePlay()
-                    CorvixMediaCommand.PAUSE -> if (_uiState.value.isPlaying) togglePlay()
-                    CorvixMediaCommand.NEXT -> nextTrack()
-                    CorvixMediaCommand.PREVIOUS -> prevTrack()
-                }
+        CorvixMediaCommandBus.directHandler = { cmd ->
+            when (cmd) {
+                CorvixMediaCommand.TOGGLE_PLAY -> togglePlay()
+                CorvixMediaCommand.PLAY -> if (!_uiState.value.isPlaying) togglePlay()
+                CorvixMediaCommand.PAUSE -> if (_uiState.value.isPlaying) togglePlay()
+                CorvixMediaCommand.NEXT -> nextTrack()
+                CorvixMediaCommand.PREVIOUS -> prevTrack()
             }
         }
     }
@@ -442,21 +458,25 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
                 val st = _uiState.value
                 if (st.isPlaying) {
                     val realSec = audioController.currentPositionSec()
-                    val next = if (realSec != null && realSec > 0) {
-                        realSec % st.currentTrack.durationSec.coerceAtLeast(1)
-                    } else {
-                        _elapsedSec.value + 1
-                    }
-                    if (next >= st.currentTrack.durationSec) {
-                        if (st.repeatMode == RepeatMode.ONE) {
-                            seekTo(0)
-                        } else {
-                            nextTrack()
-                        }
-                    } else {
-                        _elapsedSec.value = next
+                    if (realSec != null) {
+                        val clamped = realSec.coerceIn(0, st.currentTrack.durationSec.coerceAtLeast(1))
+                        _elapsedSec.value = clamped
                         if (CorvixWidgetBridge.hasActiveWidgets(getApplication())) {
                             syncWidgetState()
+                        }
+                    } else if (st.currentTrack.id != 0L) {
+                        val next = _elapsedSec.value + 1
+                        if (next >= st.currentTrack.durationSec) {
+                            if (st.repeatMode == RepeatMode.ONE) {
+                                seekTo(0)
+                            } else {
+                                nextTrack()
+                            }
+                        } else {
+                            _elapsedSec.value = next
+                            if (CorvixWidgetBridge.hasActiveWidgets(getApplication())) {
+                                syncWidgetState()
+                            }
                         }
                     }
                 }
@@ -501,6 +521,7 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
                 }
                 loadAdaptivePaletteFor(firstTrack)
             }
+            syncServiceQueue()
         }
     }
 
@@ -690,6 +711,7 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
         }
         audioController.loadTrack(track, autoPlay = true)
         syncEffectsToHardware()
+        syncServiceQueue()
         syncWidgetState()
         if (cachedPal == null) {
             loadAdaptivePaletteFor(track)
@@ -916,6 +938,7 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
             audioController.setRepeatMode(next)
             st.copy(repeatMode = next)
         }
+        syncServiceQueue()
     }
 
     fun cycleSpeed() {
@@ -2118,11 +2141,13 @@ class CorvixViewModel(application: Application) : AndroidViewModel(application) 
 
     override fun onCleared() {
         CorvixWidgetBridge.actionHandler = null
+        CorvixMediaCommandBus.directHandler = null
         audioController.release()
         super.onCleared()
     }
 
     private fun syncWidgetState() {
+        syncServiceQueue()
         val st = _uiState.value
         val track = st.currentTrack
         val bmp = runCatching { AlbumArtLoader.getCached(track, highRes = false)?.imageBitmap?.asAndroidBitmap() }.getOrNull()

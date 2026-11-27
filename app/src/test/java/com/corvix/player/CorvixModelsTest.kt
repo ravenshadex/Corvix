@@ -1,6 +1,7 @@
 package com.corvix.player
 
 import androidx.compose.ui.unit.dp
+import com.corvix.player.audio.CorvixServiceQueue
 import com.corvix.player.model.AppSkin
 import com.corvix.player.model.AppTypography
 import com.corvix.player.model.CorvixSampleData
@@ -117,5 +118,23 @@ class CorvixModelsTest {
         assertTrue(landscape.isWideOrLandscape)
         assertTrue(tablet.isWideOrLandscape)
         assertTrue(tablet.textScale >= normal.textScale)
+    }
+
+    @Test
+    fun serviceQueueFallbackAdvancesThroughQueueAndWraps() {
+        val sample = CorvixSampleData.seedTracks
+        CorvixServiceQueue.sync(
+            tracks = sample,
+            currentIndex = 0,
+            isShuffle = false,
+            repeatMode = com.corvix.player.model.RepeatMode.ALL,
+            nextUpIds = listOf(sample[4].id)
+        )
+        val firstNext = CorvixServiceQueue.nextTrackFallback()
+        assertEquals(sample[4].id, firstNext?.id)
+        val secondNext = CorvixServiceQueue.nextTrackFallback()
+        assertEquals(sample[5].id, secondNext?.id)
+        val prev = CorvixServiceQueue.prevTrackFallback()
+        assertEquals(sample[4].id, prev?.id)
     }
 }

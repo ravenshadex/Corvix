@@ -10,6 +10,7 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -33,6 +34,7 @@ class CorvixAudioController(
     private val scope: CorvixCoroutineScopeWrapper? = null,
     private val onPlaybackStateChanged: (isPlaying: Boolean, positionSec: Int) -> Unit,
     private val onTrackCompleted: () -> Unit,
+    private val onTrackError: () -> Unit = onTrackCompleted,
     private val onHardwareOutputDetected: (String) -> Unit
 ) {
     constructor(
@@ -40,12 +42,14 @@ class CorvixAudioController(
         scope: CoroutineScope,
         onPlaybackStateChanged: (isPlaying: Boolean, positionSec: Int) -> Unit,
         onTrackCompleted: () -> Unit,
+        onTrackError: () -> Unit = onTrackCompleted,
         onHardwareOutputDetected: (String) -> Unit
     ) : this(
         context = context,
         scope = CorvixCoroutineScopeWrapper(scope),
         onPlaybackStateChanged = onPlaybackStateChanged,
         onTrackCompleted = onTrackCompleted,
+        onTrackError = onTrackError,
         onHardwareOutputDetected = onHardwareOutputDetected
     )
 
@@ -59,6 +63,12 @@ class CorvixAudioController(
     private var pendingAutoPlay: Boolean = false
     private var nowPlayingVisible: Boolean = false
     private var isPlayingFlag: Boolean = false
+    private var desiredPlayState: Boolean = false
+    private var isSwitchingTrack: Boolean = false
+    private var activeLoadedTrackId: Long = -1L
+    private var completedTrackId: Long = -1L
+    private var consecutiveErrorCount: Int = 0
+    private var loadJob: Job? = null
     private var visualizerJob: Job? = null
 
     private val _playbackPositionSec = MutableStateFlow(0)
@@ -77,16 +87,61 @@ class CorvixAudioController(
                     controller = ctrl
                     ctrl.addListener(object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
+                            if (!isPlaying && isSwitchingTrack && desiredPlayState) {
+                                return
+                            }
                             isPlayingFlag = isPlaying
+                            if (isPlaying) {
+                                isSwitchingTrack = false
+                                consecutiveErrorCount = 0
+                            }
                             val sec = (ctrl.currentPosition / 1000L).toInt().coerceAtLeast(0)
                             _playbackPositionSec.value = sec
                             onPlaybackStateChanged(isPlaying, sec)
                             updateVisualizerLoop()
                         }
 
+                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                            if (!playWhenReady && !isSwitchingTrack) {
+                                desiredPlayState = false
+                                isPlayingFlag = false
+                                val sec = (ctrl.currentPosition / 1000L).toInt().coerceAtLeast(0)
+                                onPlaybackStateChanged(false, sec)
+                                updateVisualizerLoop()
+                            }
+                        }
+
                         override fun onPlaybackStateChanged(playbackState: Int) {
-                            if (playbackState == Player.STATE_ENDED) {
-                                onTrackCompleted()
+                            when (playbackState) {
+                                Player.STATE_READY -> {
+                                    isSwitchingTrack = false
+                                    consecutiveErrorCount = 0
+                                    if (desiredPlayState && !ctrl.isPlaying && ctrl.playWhenReady) {
+                                        ctrl.play()
+                                    }
+                                }
+                                Player.STATE_ENDED -> {
+                                    isSwitchingTrack = false
+                                    val loadedId = activeLoadedTrackId
+                                    if (desiredPlayState && loadedId != completedTrackId) {
+                                        completedTrackId = loadedId
+                                        onTrackCompleted()
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onPlayerError(error: PlaybackException) {
+                            isSwitchingTrack = false
+                            if (desiredPlayState && consecutiveErrorCount < 3) {
+                                consecutiveErrorCount += 1
+                                onTrackError()
+                            } else {
+                                desiredPlayState = false
+                                isPlayingFlag = false
+                                val sec = (ctrl.currentPosition / 1000L).toInt().coerceAtLeast(0)
+                                onPlaybackStateChanged(false, sec)
+                                updateVisualizerLoop()
                             }
                         }
 
@@ -169,13 +224,13 @@ class CorvixAudioController(
     }
 
     fun loadTrack(track: Track, autoPlay: Boolean) {
-        val ctrl = controller
-        if (ctrl == null) {
-            pendingTrack = track
-            pendingAutoPlay = autoPlay
-            return
-        }
-        workScope.launch(Dispatchers.Main) {
+        desiredPlayState = autoPlay
+        isSwitchingTrack = autoPlay
+        pendingTrack = track
+        pendingAutoPlay = autoPlay
+        val ctrl = controller ?: return
+        loadJob?.cancel()
+        loadJob = workScope.launch(Dispatchers.Main) {
             val uri = LocalLibraryScanner.ensureShowcaseAudioUri(context, track)
             val meta = MediaMetadata.Builder()
                 .setTitle(track.title)
@@ -187,17 +242,22 @@ class CorvixAudioController(
                 .setMediaId(track.id.toString())
                 .setMediaMetadata(meta)
                 .build()
-            ctrl.setMediaItem(item)
+            activeLoadedTrackId = track.id
+            completedTrackId = -1L
+            ctrl.playWhenReady = autoPlay
+            ctrl.setMediaItem(item, true)
             ctrl.prepare()
             if (autoPlay) {
                 ctrl.play()
             } else {
                 ctrl.pause()
+                isSwitchingTrack = false
             }
         }
     }
 
     fun setPlaying(play: Boolean) {
+        desiredPlayState = play
         isPlayingFlag = play
         updateVisualizerLoop()
         val ctrl = controller ?: return
@@ -205,9 +265,14 @@ class CorvixAudioController(
             if (ctrl.mediaItemCount == 0 && pendingTrack != null) {
                 loadTrack(pendingTrack!!, true)
             } else {
+                if (ctrl.playbackState == Player.STATE_ENDED) {
+                    ctrl.seekTo(0L)
+                }
+                ctrl.playWhenReady = true
                 ctrl.play()
             }
         } else {
+            isSwitchingTrack = false
             ctrl.pause()
         }
     }

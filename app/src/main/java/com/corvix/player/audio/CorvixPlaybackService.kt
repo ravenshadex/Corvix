@@ -1,6 +1,10 @@
 package com.corvix.player.audio
 
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
+import android.media.AudioRecordingConfiguration
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
 import android.media.audiofx.PresetReverb
@@ -14,16 +18,28 @@ import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.corvix.player.MainActivity
+import com.corvix.player.model.RepeatMode
 import com.corvix.player.model.ReverbSpace
+import com.corvix.player.model.Track
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
+import java.util.IdentityHashMap
 import kotlin.math.abs
 
 enum class CorvixMediaCommand {
@@ -35,11 +51,83 @@ enum class CorvixMediaCommand {
 }
 
 object CorvixMediaCommandBus {
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val _commands = MutableSharedFlow<CorvixMediaCommand>(extraBufferCapacity = 16)
     val commands: SharedFlow<CorvixMediaCommand> = _commands.asSharedFlow()
 
-    fun emit(command: CorvixMediaCommand) {
-        _commands.tryEmit(command)
+    @Volatile
+    var directHandler: ((CorvixMediaCommand) -> Unit)? = null
+
+    fun emit(command: CorvixMediaCommand): Boolean {
+        val handler = directHandler
+        if (handler != null) {
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                handler(command)
+            } else {
+                mainHandler.post { handler(command) }
+            }
+            return true
+        }
+        return _commands.tryEmit(command)
+    }
+}
+
+/**
+ * Process-scoped queue snapshot so CorvixPlaybackService can continue advancing
+ * tracks or responding to notification Next/Prev even if the Activity/ViewModel
+ * was destroyed in the background.
+ */
+object CorvixServiceQueue {
+    @Volatile var tracks: List<Track> = emptyList()
+    @Volatile var currentIndex: Int = 0
+    @Volatile var isShuffle: Boolean = false
+    @Volatile var repeatMode: RepeatMode = RepeatMode.ALL
+    @Volatile var nextUpIds: List<Long> = emptyList()
+
+    fun sync(
+        tracks: List<Track>,
+        currentIndex: Int,
+        isShuffle: Boolean,
+        repeatMode: RepeatMode,
+        nextUpIds: List<Long>
+    ) {
+        this.tracks = tracks
+        this.currentIndex = currentIndex
+        this.isShuffle = isShuffle
+        this.repeatMode = repeatMode
+        this.nextUpIds = nextUpIds
+    }
+
+    @Synchronized
+    fun nextTrackFallback(): Track? {
+        val list = tracks
+        if (list.isEmpty()) return null
+        val queuedId = nextUpIds.firstOrNull()
+        if (queuedId != null) {
+            nextUpIds = nextUpIds.drop(1)
+            val qIdx = list.indexOfFirst { it.id == queuedId }
+            if (qIdx >= 0) {
+                currentIndex = qIdx
+                return list[qIdx]
+            }
+        }
+        val nextIdx = if (isShuffle && list.size > 1) {
+            val candidates = list.indices.filter { it != currentIndex }
+            candidates.random()
+        } else {
+            (currentIndex + 1) % list.size
+        }
+        currentIndex = nextIdx
+        return list[nextIdx]
+    }
+
+    @Synchronized
+    fun prevTrackFallback(): Track? {
+        val list = tracks
+        if (list.isEmpty()) return null
+        val prevIdx = (currentIndex - 1 + list.size) % list.size
+        currentIndex = prevIdx
+        return list[prevIdx]
     }
 }
 
@@ -185,16 +273,63 @@ class CorvixPlaybackService : MediaSessionService() {
 
     private var player: ExoPlayer? = null
     private var mediaSession: MediaSession? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val mainHandler = Handler(Looper.getMainLooper())
     private var multiTapCount = 0
+    private var serviceErrorCount = 0
+    private var audioManager: AudioManager? = null
+    private var recordingCallback: AudioManager.AudioRecordingCallback? = null
+
+    private fun dispatchMediaCommand(cmd: CorvixMediaCommand) {
+        if (CorvixMediaCommandBus.directHandler != null) {
+            CorvixMediaCommandBus.emit(cmd)
+            return
+        }
+        val exo = player ?: return
+        when (cmd) {
+            CorvixMediaCommand.TOGGLE_PLAY -> {
+                if (exo.isPlaying) exo.pause() else exo.play()
+            }
+            CorvixMediaCommand.PLAY -> exo.play()
+            CorvixMediaCommand.PAUSE -> exo.pause()
+            CorvixMediaCommand.NEXT -> {
+                val track = CorvixServiceQueue.nextTrackFallback() ?: return
+                loadAndPlayFallbackTrack(exo, track)
+            }
+            CorvixMediaCommand.PREVIOUS -> {
+                val track = CorvixServiceQueue.prevTrackFallback() ?: return
+                loadAndPlayFallbackTrack(exo, track)
+            }
+        }
+    }
+
+    private fun loadAndPlayFallbackTrack(exo: ExoPlayer, track: Track) {
+        serviceScope.launch {
+            val uri = LocalLibraryScanner.ensureShowcaseAudioUri(this@CorvixPlaybackService, track)
+            val meta = MediaMetadata.Builder()
+                .setTitle(track.title)
+                .setArtist(track.artist)
+                .setAlbumTitle(track.album)
+                .build()
+            val item = MediaItem.Builder()
+                .setUri(uri)
+                .setMediaId(track.id.toString())
+                .setMediaMetadata(meta)
+                .build()
+            exo.playWhenReady = true
+            exo.setMediaItem(item, true)
+            exo.prepare()
+            exo.play()
+        }
+    }
 
     private val multiTapRunnable = Runnable {
         val count = multiTapCount
         multiTapCount = 0
         when {
-            count == 1 -> CorvixMediaCommandBus.emit(CorvixMediaCommand.TOGGLE_PLAY)
-            count == 2 -> CorvixMediaCommandBus.emit(CorvixMediaCommand.NEXT)
-            count >= 3 -> CorvixMediaCommandBus.emit(CorvixMediaCommand.PREVIOUS)
+            count == 1 -> dispatchMediaCommand(CorvixMediaCommand.TOGGLE_PLAY)
+            count == 2 -> dispatchMediaCommand(CorvixMediaCommand.NEXT)
+            count >= 3 -> dispatchMediaCommand(CorvixMediaCommand.PREVIOUS)
         }
     }
 
@@ -209,7 +344,23 @@ class CorvixPlaybackService : MediaSessionService() {
         val exo = ExoPlayer.Builder(this)
             .setAudioAttributes(attrs, true)
             .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+
+        val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audioManager = am
+        if (am != null) {
+            val recCb = object : AudioManager.AudioRecordingCallback() {
+                override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>?) {
+                    if (!configs.isNullOrEmpty() && (exo.isPlaying || exo.playWhenReady)) {
+                        Log.i("CorvixPlaybackService", "External audio recording detected; pausing playback")
+                        exo.pause()
+                    }
+                }
+            }
+            recordingCallback = recCb
+            am.registerAudioRecordingCallback(recCb, mainHandler)
+        }
 
         exo.addAnalyticsListener(object : AnalyticsListener {
             override fun onAudioSessionIdChanged(eventTime: AnalyticsListener.EventTime, audioSessionId: Int) {
@@ -218,8 +369,19 @@ class CorvixPlaybackService : MediaSessionService() {
         })
         exo.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) {
-                    CorvixDspEngine.attachSession(exo.audioSessionId)
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        serviceErrorCount = 0
+                        CorvixDspEngine.attachSession(exo.audioSessionId)
+                    }
+                    Player.STATE_ENDED -> {
+                        if (exo.playWhenReady &&
+                            CorvixMediaCommandBus.directHandler == null &&
+                            exo.repeatMode != Player.REPEAT_MODE_ONE
+                        ) {
+                            dispatchMediaCommand(CorvixMediaCommand.NEXT)
+                        }
+                    }
                 }
             }
 
@@ -228,19 +390,56 @@ class CorvixPlaybackService : MediaSessionService() {
                     CorvixDspEngine.attachSession(exo.audioSessionId)
                 }
             }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.w("CorvixPlaybackService", "Playback error: ${error.errorCodeName}", error)
+                if (exo.playWhenReady &&
+                    CorvixMediaCommandBus.directHandler == null &&
+                    serviceErrorCount < 3
+                ) {
+                    serviceErrorCount += 1
+                    dispatchMediaCommand(CorvixMediaCommand.NEXT)
+                }
+            }
         })
         if (exo.audioSessionId > 0) {
             CorvixDspEngine.attachSession(exo.audioSessionId)
         }
 
         val sessionPlayer = object : ForwardingPlayer(exo) {
-            override fun getAvailableCommands(): Player.Commands {
-                return super.getAvailableCommands().buildUpon()
+            private val wrappedListeners = IdentityHashMap<Player.Listener, Player.Listener>()
+
+            private fun augmentedCommands(base: Player.Commands): Player.Commands {
+                return base.buildUpon()
                     .add(Player.COMMAND_SEEK_TO_NEXT)
                     .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
                     .add(Player.COMMAND_SEEK_TO_PREVIOUS)
                     .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
                     .build()
+            }
+
+            override fun addListener(listener: Player.Listener) {
+                val forwarding = this
+                val wrapper = object : Player.Listener by listener {
+                    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                        listener.onAvailableCommandsChanged(augmentedCommands(availableCommands))
+                    }
+
+                    override fun onEvents(player: Player, events: Player.Events) {
+                        listener.onEvents(forwarding, events)
+                    }
+                }
+                wrappedListeners[listener] = wrapper
+                super.addListener(wrapper)
+            }
+
+            override fun removeListener(listener: Player.Listener) {
+                val wrapper = wrappedListeners.remove(listener) ?: listener
+                super.removeListener(wrapper)
+            }
+
+            override fun getAvailableCommands(): Player.Commands {
+                return augmentedCommands(super.getAvailableCommands())
             }
 
             override fun isCommandAvailable(command: Int): Boolean {
@@ -258,23 +457,32 @@ class CorvixPlaybackService : MediaSessionService() {
             override fun hasPreviousMediaItem(): Boolean = true
 
             override fun seekToNext() {
-                CorvixMediaCommandBus.emit(CorvixMediaCommand.NEXT)
+                dispatchMediaCommand(CorvixMediaCommand.NEXT)
             }
 
             override fun seekToNextMediaItem() {
-                CorvixMediaCommandBus.emit(CorvixMediaCommand.NEXT)
+                dispatchMediaCommand(CorvixMediaCommand.NEXT)
             }
 
             override fun seekToPrevious() {
-                CorvixMediaCommandBus.emit(CorvixMediaCommand.PREVIOUS)
+                dispatchMediaCommand(CorvixMediaCommand.PREVIOUS)
             }
 
             override fun seekToPreviousMediaItem() {
-                CorvixMediaCommandBus.emit(CorvixMediaCommand.PREVIOUS)
+                dispatchMediaCommand(CorvixMediaCommand.PREVIOUS)
             }
         }
 
         val callback = object : MediaSession.Callback {
+            override fun onConnect(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo
+            ): MediaSession.ConnectionResult {
+                return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                    .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
+                    .build()
+            }
+
             override fun onMediaButtonEvent(
                 session: MediaSession,
                 controllerInfo: MediaSession.ControllerInfo,
@@ -297,7 +505,7 @@ class CorvixPlaybackService : MediaSessionService() {
                             multiTapCount += 1
                             if (multiTapCount >= 3) {
                                 multiTapCount = 0
-                                CorvixMediaCommandBus.emit(CorvixMediaCommand.PREVIOUS)
+                                dispatchMediaCommand(CorvixMediaCommand.PREVIOUS)
                             } else {
                                 mainHandler.postDelayed(multiTapRunnable, 380L)
                             }
@@ -306,13 +514,13 @@ class CorvixPlaybackService : MediaSessionService() {
                     }
                     KeyEvent.KEYCODE_MEDIA_NEXT -> {
                         if (keyEvent.action == KeyEvent.ACTION_DOWN && keyEvent.repeatCount == 0) {
-                            CorvixMediaCommandBus.emit(CorvixMediaCommand.NEXT)
+                            dispatchMediaCommand(CorvixMediaCommand.NEXT)
                         }
                         true
                     }
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
                         if (keyEvent.action == KeyEvent.ACTION_DOWN && keyEvent.repeatCount == 0) {
-                            CorvixMediaCommandBus.emit(CorvixMediaCommand.PREVIOUS)
+                            dispatchMediaCommand(CorvixMediaCommand.PREVIOUS)
                         }
                         true
                     }
@@ -321,8 +529,18 @@ class CorvixPlaybackService : MediaSessionService() {
             }
         }
 
+        val sessionActivityIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         player = exo
         mediaSession = MediaSession.Builder(this, sessionPlayer)
+            .setSessionActivity(sessionActivityIntent)
             .setCallback(callback)
             .build()
     }
@@ -340,6 +558,12 @@ class CorvixPlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         mainHandler.removeCallbacks(multiTapRunnable)
+        recordingCallback?.let { cb ->
+            runCatching { audioManager?.unregisterAudioRecordingCallback(cb) }
+        }
+        recordingCallback = null
+        audioManager = null
+        serviceScope.cancel()
         CorvixDspEngine.release()
         mediaSession?.run {
             player.release()

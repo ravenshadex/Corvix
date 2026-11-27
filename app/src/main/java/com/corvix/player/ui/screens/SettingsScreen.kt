@@ -817,12 +817,9 @@ fun SettingsScreen(
             }
         }
 
-        // 10. Personal Creator Signature Card (Animated Vector Autograph)
+        // 10. Personal Creator Signature Card
         item(key = "creator_signature") {
-            CreatorSignatureSettingsCard(
-                versionName = BuildConfig.VERSION_NAME,
-                versionCode = BuildConfig.VERSION_CODE
-            )
+            CreatorSignatureSettingsCard()
         }
     }
 }

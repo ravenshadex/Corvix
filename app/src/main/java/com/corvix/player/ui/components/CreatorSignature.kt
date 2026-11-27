@@ -275,8 +275,6 @@ fun CryptographicKeyWaveform(
  */
 @Composable
 fun CreatorSignatureSettingsCard(
-    versionName: String,
-    versionCode: Int,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -351,16 +349,11 @@ fun CreatorSignatureSettingsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "PERSONAL SIGNATURE",
-                        style = font.style(9.5f, FontWeight.Bold, palette.accentText, mono = true)
-                    )
-                    Text(
-                        text = "Crafted by ${CreatorSealCrypto.CREATOR_HANDLE}",
-                        style = font.style(13f, FontWeight.Bold, palette.textPrimary)
-                    )
-                }
+                Text(
+                    text = "Crafted by ${CreatorSealCrypto.CREATOR_HANDLE}",
+                    style = font.style(13.5f, FontWeight.Bold, palette.textPrimary),
+                    modifier = Modifier.weight(1f)
+                )
 
                 GlassPill(
                     onClick = { replayKey++ },
@@ -445,21 +438,6 @@ fun CreatorSignatureSettingsCard(
                     )
                 }
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Serial ${CreatorSealCrypto.RELEASE_CERT_SERIAL}",
-                    style = font.style(10f, FontWeight.Normal, palette.textMuted, mono = true)
-                )
-                Text(
-                    text = "v$versionName ($versionCode)",
-                    style = font.style(10f, FontWeight.SemiBold, palette.textMuted, mono = true)
-                )
-            }
         }
     }
 }
@@ -508,32 +486,17 @@ fun OnboardingCreatorSignatureFooter(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Text(
-                    text = "RAVENSHADEX",
-                    style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 10.5.sp,
-                        letterSpacing = 1.6.sp,
-                        color = Color(0xFFF8FAFC),
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
-                    )
+            Text(
+                text = "RAVENSHADEX",
+                style = TextStyle(
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 10.5.sp,
+                    letterSpacing = 1.6.sp,
+                    color = Color(0xFFF8FAFC),
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
                 )
-                Text(
-                    text = "· SIGNATURE",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 9.sp,
-                        color = amberStart.copy(alpha = 0.85f),
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
-                    )
-                )
-            }
+            )
             Text(
                 text = "KEY ${inspection.shortFingerprint}",
                 maxLines = 1,

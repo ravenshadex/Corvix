@@ -35,7 +35,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,7 +65,6 @@ import com.corvix.player.model.ArtistRecapEntry
 import com.corvix.player.model.RecapStats
 import com.corvix.player.model.Track
 import com.corvix.player.ui.components.ArtworkBox
-import com.corvix.player.ui.components.GlassPill
 import com.corvix.player.ui.components.GlassSurface
 import com.corvix.player.ui.theme.LocalCorvixFont
 import com.corvix.player.ui.theme.LocalCorvixMetrics
@@ -102,11 +100,9 @@ fun ProfileScreen(
         contentPadding = PaddingValues(bottom = metrics.dockBottomClearance, top = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 1. Header & Export Pill
+        // 1. Header
         item(key = "header") {
-            RecapHeader(
-                onExport = { viewModel.shareSongCard(state.currentTrack.id) }
-            )
+            RecapHeader()
         }
 
         // 2. Swipeable "Most Played" Artist Carousel
@@ -204,46 +200,22 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun RecapHeader(onExport: () -> Unit) {
+private fun RecapHeader() {
     val palette = LocalCorvixPalette.current
     val font = LocalCorvixFont.current
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 6.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "Your Recap",
-                style = font.style(26f, FontWeight.Bold, palette.textPrimary)
-            )
-            Text(
-                "Listening lore · Local Library",
-                style = font.style(12f, FontWeight.Normal, palette.textMuted)
-            )
-        }
-        GlassPill(
-            onClick = onExport,
-            padding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Share,
-                    contentDescription = null,
-                    tint = palette.accentText,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    "Export Card",
-                    style = font.style(12f, FontWeight.SemiBold, palette.accentText)
-                )
-            }
-        }
+        Text(
+            "Your Recap",
+            style = font.style(26f, FontWeight.Bold, palette.textPrimary)
+        )
+        Text(
+            "Listening lore · Local Library",
+            style = font.style(12f, FontWeight.Normal, palette.textMuted)
+        )
     }
 }
 

@@ -1,5 +1,10 @@
 # Corvix Changelog
 
+## v1.0.5 (Build 6)
+### Personal Signature Emblem & Cryptographic Release-Key Seal
+- **Personal Creator Signature Emblem:** Added the bespoke crimson-and-obsidian `ravenshadex` emblem (`ravenshadex_signature.png`) to the Liquid Glass Settings signature card and Welcome/Onboarding footer with tap-to-replay animation.
+- **Cryptographic Release-Key Seal (`CreatorSealCrypto`):** Bound the signature seal to the private release keystore (`corvix-release.jks`) SHA-256 certificate fingerprint (`EAAE1247...28B0`), verifying the live APK signing certificate at runtime (`Key Verified` / `Dev Build` / `Unverified Key`) and rendering a deterministic 32-bar SHA-256 key waveform.
+
 ## v1.0.4 (Build 5)
 ### Real Liquid Glass UI, Now Playing Redesign & Release Signing
 - **Real Liquid Glass Material System:** Updated `LiquidGlass.kt` with rounded-rectangle SDF edge-refraction AGSL shaders (eliminating inner rectangle artifacts), outer-only `ClipOp.Difference` drop shadows, stronger `0..100` glass blur & prism dispersion, and frosted `94%` smoked-crystal backing on the Mini-Player, Dock, and Lyrics Manager.

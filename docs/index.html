@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corvix Music Player — Offline Lossless Android Audio Player</title>
+  <meta name="description" content="Corvix is a 100% offline lossless Android music player featuring Liquid Glass UI, Classic iPod &amp; Winamp 2.91 skins, 10-band hardware DSP/AutoEQ, synced lyrics, and live visualizers." />
+  <meta name="keywords" content="Corvix, Corvix Music Player, Corvix app, offline music player Android, lossless FLAC player, Liquid Glass UI, Media3 ExoPlayer, ravenshadex" />
+  <meta name="author" content="ravenshadex" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ravenshadex.github.io/Corvix/" />
+  <link rel="icon" type="image/png" href="assets/corvix-icon.png" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Corvix — Offline Lossless Android Music Player" />
+  <meta property="og:description" content="Pure Sound. Zero Signal. Liquid Glass UI, Classic iPod &amp; Winamp skins, 10-band hardware DSP, and lossless FLAC/ALAC/WAV/DSD playback for Android 8.0+." />
+  <meta property="og:url" content="https://ravenshadex.github.io/Corvix/" />
+  <meta property="og:image" content="https://ravenshadex.github.io/Corvix/assets/carousel-1-hero.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Corvix — Offline Lossless Android Music Player" />
+  <meta name="twitter:description" content="Liquid Glass UI, Classic iPod &amp; Winamp skins, hardware DSP/AutoEQ, synced lyrics &amp; lossless local audio for Android 8.0+." />
+  <meta name="twitter:image" content="https://ravenshadex.github.io/Corvix/assets/carousel-1-hero.png" />
+
+  <!-- Structured Data for Google Search (SoftwareApplication) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Corvix Music Player",
+    "alternateName": "Corvix",
+    "operatingSystem": "Android 8.0+",
+    "applicationCategory": "MultimediaApplication",
+    "softwareVersion": "1.0.5",
+    "url": "https://ravenshadex.github.io/Corvix/",
+    "downloadUrl": "https://github.com/ravenshadex/Corvix/releases/download/v1.0.5/Corvix-v1.0.5-universal.apk",
+    "installUrl": "https://github.com/ravenshadex/Corvix/releases/latest",
+    "image": "https://ravenshadex.github.io/Corvix/assets/corvix-icon.png",
+    "screenshot": [
+      "https://ravenshadex.github.io/Corvix/assets/carousel-1-hero.png",
+      "https://ravenshadex.github.io/Corvix/assets/carousel-2-nowplaying.png",
+      "https://ravenshadex.github.io/Corvix/assets/carousel-3-themes.png",
+      "https://ravenshadex.github.io/Corvix/assets/carousel-4-audio.png",
+      "https://ravenshadex.github.io/Corvix/assets/carousel-5-recap.png"
+    ],
+    "author": {
+      "@type": "Person",
+      "name": "ravenshadex",
+      "url": "https://github.com/ravenshadex"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #060913;
+      --surface: linear-gradient(155deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 55%, rgba(56,189,248,0.08) 100%);
+      --surface-border: rgba(255,255,255,0.18);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --amber: #ffd400;
+      --emerald: #34d399;
+      --crimson: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient Liquid Glass Orbs */
+    .orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(90px);
+      opacity: 0.34;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 420px; height: 420px; background: #0284c7; top: -120px; left: -90px; }
+    .orb-2 { width: 380px; height: 380px; background: #4f46e5; top: 28%; right: -120px; animation-delay: -6s; }
+    .orb-3 { width: 340px; height: 340px; background: #b91c1c; bottom: -100px; left: 22%; opacity: 0.20; animation-delay: -11s; }
+
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(35px, 28px) scale(1.08); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    /* Glass Surface */
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--surface-border);
+      border-radius: 24px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 18px 42px rgba(0,0,0,0.42);
+    }
+
+    /* Nav */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      margin-bottom: 34px;
+      border-radius: 999px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .brand img { width: 32px; height: 32px; border-radius: 9px; }
+    .nav-links { display: flex; gap: 18px; align-items: center; font-size: 14px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 46px 26px;
+      margin-bottom: 38px;
+    }
+    .hero-badge-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 16px 36px rgba(56, 189, 248, 0.25);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--amber);
+      background: rgba(255, 212, 0, 0.12);
+      border: 1px solid rgba(255, 212, 0, 0.34);
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.12;
+      margin-bottom: 14px;
+    }
+    .hero p {
+      max-width: 640px;
+      margin: 0 auto 26px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 24px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #060913;
+      box-shadow: 0 10px 26px rgba(56, 189, 248, 0.35);
+    }
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .meta-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 44px 0 18px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Showcase Gallery */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 14px;
+    }
+    .shot-card {
+      padding: 10px;
+      border-radius: 20px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .shot-card:hover { transform: translateY(-4px); }
+    .shot-card img {
+      width: 100%;
+      border-radius: 14px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .shot-card span {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    /* Feature Grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .feat-card { padding: 20px; border-radius: 20px; }
+    .feat-tag {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .feat-card h3 { font-size: 17px; margin-bottom: 6px; }
+    .feat-card p { font-size: 13.5px; color: var(--muted); }
+
+    /* Verification & Checksums */
+    .verify-card {
+      padding: 22px;
+      margin-top: 38px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      align-items: center;
+    }
+    .hash-box {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11.5px;
+      background: rgba(0,0,0,0.34);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 10px 12px;
+      word-break: break-all;
+      color: #cbd5e1;
+      margin-top: 6px;
+    }
+    .verified-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald);
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    /* Signature Footer */
+    .sig-footer {
+      margin-top: 40px;
+      padding: 20px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .sig-left { display: flex; align-items: center; gap: 14px; }
+    .sig-left img { width: 64px; height: auto; filter: drop-shadow(0 0 14px rgba(239,68,68,0.35)); }
+    .sig-title { font-weight: 800; letter-spacing: 1.6px; font-size: 14px; }
+    .sig-sub { font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .sig-right { font-size: 13px; color: var(--muted); }
+    .sig-right a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 32px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    <header class="topbar glass">
+      <a class="brand" href="#top">
+        <img src="assets/corvix-icon.png" alt="Corvix Icon" />
+        <span>Corvix Music Player</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#showcase">Showcase</a>
+        <a href="#features">Features</a>
+        <a href="#verify">Verify APK</a>
+        <a href="https://github.com/ravenshadex/Corvix" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="hero glass" id="top">
+      <img class="hero-badge-icon" src="assets/corvix-icon.png" alt="Corvix App Logo" />
+      <div><span class="eyebrow">⚡ 100% OFFLINE HI-RES ANDROID PLAYER</span></div>
+      <h1>Pure Sound.<br />Zero Signal.</h1>
+      <p>
+        Corvix is an offline lossless Android music player crafted with Real Liquid Glass UI,
+        Classic iPod &amp; Winamp 2.91 skins, 10-band hardware DSP, and zero cloud tracking.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/ravenshadex/Corvix/releases/download/v1.0.5/Corvix-v1.0.5-universal.apk">
+          Download v1.0.5 APK (15.8 MB)
+        </a>
+        <a class="btn btn-glass" href="https://github.com/ravenshadex/Corvix" target="_blank" rel="noopener">
+          View Source on GitHub
+        </a>
+      </div>
+      <div class="meta-pills">
+        <span class="meta-pill">Android 8.0+ (API 26–34)</span>
+        <span class="meta-pill">v1.0.5 (Build 6)</span>
+        <span class="meta-pill">FLAC · ALAC · WAV · DSD · OPUS · MP3</span>
+      </div>
+    </section>
+
+    <h2 class="section-title" id="showcase">Interface &amp; Skins</h2>
+    <section class="gallery">
+      <div class="shot-card glass">
+        <img src="assets/carousel-1-hero.png" alt="Corvix Library Liquid Glass UI" loading="lazy" />
+        <span>Library &amp; Liquid Glass</span>
+      </div>
+      <div class="shot-card glass">
+        <img src="assets/carousel-2-nowplaying.png" alt="Corvix Now Playing Screen" loading="lazy" />
+        <span>Now Playing &amp; Queue</span>
+      </div>
+      <div class="shot-card glass">
+        <img src="assets/carousel-3-themes.png" alt="Corvix Themes and Retro Skins" loading="lazy" />
+        <span>iPod &amp; Winamp Skins</span>
+      </div>
+      <div class="shot-card glass">
+        <img src="assets/carousel-4-audio.png" alt="Corvix Hardware DSP and Equalizer" loading="lazy" />
+        <span>10-Band DSP &amp; AutoEQ</span>
+      </div>
+      <div class="shot-card glass">
+        <img src="assets/carousel-5-recap.png" alt="Corvix Listening Recap" loading="lazy" />
+        <span>Listening Recap</span>
+      </div>
+    </section>
+
+    <h2 class="section-title" id="features">Built for Local Music Collectors</h2>
+    <section class="features">
+      <div class="feat-card glass">
+        <span class="feat-tag">LIQUID GLASS &amp; SKINS</span>
+        <h3>3 Switchable Player Skins</h3>
+        <p>Switch seamlessly between Liquid Shell (AGSL edge-refraction glass &amp; 9 presets), 7th-Gen Classic iPod Click Wheel, and Winamp 2.91 Classic.</p>
+      </div>
+      <div class="feat-card glass">
+        <span class="feat-tag">AUDIO ENGINE</span>
+        <h3>Media3 + Hardware DSP</h3>
+        <p>ExoPlayer foreground playback with 5/10-band Equalizer, BassBoost, Virtualizer, PresetReverb, AutoEQ profiles, and live USB DAC / IEM detection.</p>
+      </div>
+      <div class="feat-card glass">
+        <span class="feat-tag">LIBRARY &amp; LYRICS</span>
+        <h3>Smart Offline Scanner</h3>
+        <p>Indexes FLAC, WAV, ALAC, APE, DSD, MP3, OPUS, OGG, and M4A tracks with 7-language detection, synced .lrc lyrics, tag editor, and 11 live visualizers.</p>
+      </div>
+      <div class="feat-card glass">
+        <span class="feat-tag">PRIVACY FIRST</span>
+        <h3>Zero Ads. Zero Cloud.</h3>
+        <p>Every scan, equalizer preset, listening recap, ringtone cut, and home screen widget runs strictly on-device with no telemetry.</p>
+      </div>
+    </section>
+
+    <section class="verify-card glass" id="verify">
+      <div>
+        <span class="verified-pill">✓ Signed Release APK · v1.0.5</span>
+        <h3>Cryptographic Release Verification</h3>
+        <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
+          Verify your downloaded APK matches the official <code style="color: var(--text);">ravenshadex</code> release signing key (<code style="color: var(--text);">CN=Corvix, O=Corvix Audio, C=IN</code>).
+        </p>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--muted); font-weight: 600;">APK SHA-256 (Corvix-v1.0.5-universal.apk)</div>
+        <div class="hash-box">927a169c6a8f253ab90abbed9811135493f9380be8822471736c22abaab2a6f5</div>
+        <div style="font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 10px;">Signing Certificate SHA-256</div>
+        <div class="hash-box">EAAE1247DBC523B48BB51CED718847811BCFDECB03CC104417AD757AB5C528B0</div>
+      </div>
+    </section>
+
+    <footer class="sig-footer glass">
+      <div class="sig-left">
+        <img src="assets/ravenshadex-signature.png" alt="ravenshadex signature emblem" />
+        <div>
+          <div class="sig-title">RAVENSHADEX</div>
+          <div class="sig-sub">PERSONAL SEAL · SERIAL 3312BEB623B13AA3</div>
+        </div>
+      </div>
+      <div class="sig-right">
+        <a href="https://github.com/ravenshadex/Corvix/releases" target="_blank" rel="noopener">All Releases</a> ·
+        <a href="https://github.com/ravenshadex/Corvix/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a> ·
+        <a href="https://github.com/ravenshadex/Corvix" target="_blank" rel="noopener">GitHub Repo</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

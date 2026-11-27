@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ravenshadex.github.io/Corvix/sitemap.xml

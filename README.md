@@ -10,6 +10,9 @@
     <img src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026--34)-34D399?style=for-the-badge" alt="Android API 26-34" />
     <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin" alt="Kotlin 2.0.21" />
     <img src="https://img.shields.io/badge/Jetpack%20Compose-1.7.0-4285F4?style=for-the-badge&logo=jetpackcompose" alt="Jetpack Compose 1.7.0" />
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/License-GPL--3.0-EF4444?style=for-the-badge" alt="License: GPL-3.0" />
+    </a>
     <img src="https://img.shields.io/badge/Media3-1.4.1-F59E0B?style=for-the-badge" alt="Media3 1.4.1" />
   </p>
 
@@ -127,3 +130,9 @@ On Windows PowerShell:
 ```
 
 The generated APK is output to `app/build/outputs/apk/debug/app-debug.apk`.
+
+---
+
+## License
+
+Corvix is licensed under the [**GNU General Public License v3.0 (GPL-3.0)**](LICENSE).
